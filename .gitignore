@@ -1,7 +1,10 @@
 # Task management files
 tasks/
-*.md
 *.mdc
+
+# Block all markdown files except README
+*.md
+!README.md
 
 # Environment files
 .env
