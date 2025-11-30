@@ -190,9 +190,10 @@ class OTXNormalizer:
         logger.debug("Normalizing OTX response")
 
         general = response.get('general', {})
-        reputation = response.get('reputation', {})
-        geo = response.get('geo', {})
-        malware = response.get('malware', {})
+        # Reputation can be int or dict from OTX
+        reputation = response.get('reputation', 0)
+        if isinstance(reputation, dict):
+            reputation = reputation.get('reputation', 0)
 
         # Calculate risk score from multiple indicators
         risk_score = OTXNormalizer._calculate_risk_score(
@@ -200,13 +201,18 @@ class OTXNormalizer:
             reputation
         )
 
+        # Extract geo data from general if not separate
+        country = general.get('country_name')
+        country_code = general.get('country_code2')
+        isp = general.get('asn', '').split(' ', 1)[-1] if general.get('asn') else None
+
         normalized = {
             'ip_address': response.get('ip_address'),
             'risk_score': risk_score,
             'is_malicious': risk_score > 50,
-            'country': geo.get('country_name'),
-            'country_code': geo.get('country_code'),
-            'isp': geo.get('asn', '').split(' ', 1)[-1] if geo.get('asn') else None,
+            'country': country,
+            'country_code': country_code,
+            'isp': isp,
             'domain': None,  # OTX doesn't provide this directly
             'total_reports': response.get('pulse_count', 0),
             'last_reported': None,
@@ -226,13 +232,13 @@ class OTXNormalizer:
         return normalized
 
     @staticmethod
-    def _calculate_risk_score(pulse_count: int, reputation: Dict[str, Any]) -> int:
+    def _calculate_risk_score(pulse_count: int, reputation: int) -> int:
         """
         Calculate risk score from OTX data.
 
         Args:
             pulse_count: Number of pulses mentioning this IP
-            reputation: Reputation data
+            reputation: Reputation score (0-5)
 
         Returns:
             int: Risk score (0-100)
@@ -240,10 +246,9 @@ class OTXNormalizer:
         # Base score on pulse count
         score = min(pulse_count * 10, 80)
 
-        # Adjust based on reputation
-        rep_score = reputation.get('reputation', 0)
-        if rep_score:
-            score = max(score, min(rep_score * 20, 100))
+        # Adjust based on reputation (0-5 scale from OTX)
+        if reputation > 0:
+            score = max(score, min(reputation * 20, 100))
 
         return min(score, 100)
 
