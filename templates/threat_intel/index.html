@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Intel Lookup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/threat_intel.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ THREAT INTEL LOOKUP ⚡</h1>
+            <p>Aggregate threat intelligence from multiple sources</p>
+        </header>
+
+        <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="card">
+                <h2>Enter IP Address</h2>
+                <form action="{{ url_for('threat_intel.lookup') }}" method="POST">
+                    <div class="form-group">
+                        <label for="ip_address">IP Address (IPv4 or IPv6)</label>
+                        <input
+                            type="text"
+                            id="ip_address"
+                            name="ip_address"
+                            placeholder="8.8.8.8 or 2001:4860:4860::8888"
+                            required
+                            autofocus
+                        >
+                    </div>
+                    <button type="submit">🔍 ANALYZE THREAT INTELLIGENCE</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>About This Tool</h2>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    This tool aggregates threat intelligence data from multiple sources including AbuseIPDB and AlienVault OTX.
+                    Enter an IP address to get comprehensive threat analysis including risk scores, abuse reports, and malicious activity indicators.
+                </p>
+                <p style="color: var(--text-secondary); margin-top: 15px;">
+                    <strong>Data Sources:</strong>
+                </p>
+                <ul style="color: var(--text-secondary); margin-left: 20px; line-height: 1.8;">
+                    <li>AbuseIPDB - IP abuse reports and reputation</li>
+                    <li>AlienVault OTX - Community-driven threat intelligence</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Threat Intel Lookup | Built with Python & Flask</p>
+        </footer>
+    </div>
+</body>
+</html>

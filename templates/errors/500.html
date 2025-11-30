@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Server Error</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/threat_intel.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ 500 - SERVER ERROR ⚡</h1>
+        </header>
+        <div class="card" style="text-align: center;">
+            <h2 style="color: var(--danger-red); font-size: 4em;">500</h2>
+            <p style="font-size: 1.3em; margin: 20px 0;">Internal server error</p>
+            <a href="{{ url_for('threat_intel.index') }}" class="btn">← Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Intel Results - {{ ip_address }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/threat_intel.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ THREAT INTEL RESULTS ⚡</h1>
+            <p>Analysis for: <strong style="color: var(--accent-cyan);">{{ ip_address }}</strong></p>
+        </header>
+
+        <main>
+            {% if from_cache %}
+            <div class="alert alert-info">
+                ℹ️ Results loaded from cache | Expires in: {{ cache_expires }}
+            </div>
+            {% endif %}
+
+            <!-- Risk Score Card -->
+            <div class="card" style="text-align: center;">
+                <h2>Overall Risk Assessment</h2>
+                {% set risk_score = threat_data.risk_score | default(0) %}
+                {% if risk_score < 25 %}
+                    <div class="risk-badge risk-low">{{ risk_score }}</div>
+                    <p style="color: var(--safe-green); margin-top: 15px; font-size: 1.2em;">✅ LOW RISK</p>
+                {% elif risk_score < 75 %}
+                    <div class="risk-badge risk-medium">{{ risk_score }}</div>
+                    <p style="color: var(--warning-orange); margin-top: 15px; font-size: 1.2em;">⚠️ MEDIUM RISK</p>
+                {% else %}
+                    <div class="risk-badge risk-high">{{ risk_score }}</div>
+                    <p style="color: var(--danger-red); margin-top: 15px; font-size: 1.2em;">🚨 HIGH RISK</p>
+                {% endif %}
+                <p style="color: var(--text-secondary); margin-top: 10px;">
+                    {% if threat_data.is_malicious %}
+                        This IP has been flagged as potentially malicious
+                    {% else %}
+                        No significant malicious activity detected
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="results-grid">
+                <!-- Location Info -->
+                <div class="info-box">
+                    <h3>📍 Location</h3>
+                    <p>Country:</p>
+                    <p class="value">{{ threat_data.country or 'Unknown' }}</p>
+                    {% if threat_data.country_code %}
+                    <p style="margin-top: 10px;">Code: <span class="value">{{ threat_data.country_code }}</span></p>
+                    {% endif %}
+                </div>
+
+                <!-- ISP Info -->
+                <div class="info-box">
+                    <h3>🌐 Network</h3>
+                    <p>ISP:</p>
+                    <p class="value">{{ threat_data.isp or 'Unknown' }}</p>
+                    {% if threat_data.domain %}
+                    <p style="margin-top: 10px;">Domain: <span class="value">{{ threat_data.domain }}</span></p>
+                    {% endif %}
+                </div>
+
+                <!-- Reports Info -->
+                <div class="info-box">
+                    <h3>📊 Reports</h3>
+                    <p>Total Reports:</p>
+                    <p class="value">{{ threat_data.total_reports | default(0) }}</p>
+                    {% if threat_data.last_reported %}
+                    <p style="margin-top: 10px;">Last Reported: {{ threat_data.last_reported }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Sources Info -->
+                <div class="info-box">
+                    <h3>🔍 Data Sources</h3>
+                    <p>Sources Used:</p>
+                    <p class="value">{{ threat_data.sources | length }}</p>
+                    <div class="tags">
+                        {% for source in threat_data.sources %}
+                            <span class="tag">{{ source }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Threat Categories -->
+            {% if threat_data.categories or threat_data.threat_types %}
+            <div class="card">
+                <h2>🎯 Threat Categories</h2>
+
+                {% if threat_data.categories %}
+                <div style="margin-bottom: 20px;">
+                    <p style="color: var(--text-secondary); margin-bottom: 10px;">Abuse Categories:</p>
+                    <div class="tags">
+                        {% for category in threat_data.categories %}
+                            <span class="tag">{{ category }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if threat_data.threat_types %}
+                <div>
+                    <p style="color: var(--text-secondary); margin-bottom: 10px;">Threat Types:</p>
+                    <div class="tags">
+                        {% for threat_type in threat_data.threat_types %}
+                            <span class="tag">{{ threat_type }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="{{ url_for('threat_intel.index') }}" class="btn">🔍 Analyze Another IP</a>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Threat Intel Lookup | Built with Python & Flask</p>
+        </footer>
+    </div>
+</body>
+</html>
