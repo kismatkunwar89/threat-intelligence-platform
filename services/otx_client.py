@@ -64,7 +64,8 @@ class OTXClient(ThreatIntelClient):
         """
         Get IP reputation data from AlienVault OTX.
 
-        This method aggregates multiple OTX endpoints for comprehensive data.
+        This method queries the general endpoint which contains most data.
+        Optimized to make only 1 API call instead of 4 to avoid timeouts.
 
         Args:
             ip_address: IP address to query
@@ -78,27 +79,22 @@ class OTXClient(ThreatIntelClient):
         logger.info(f"Querying AlienVault OTX for IP: {ip_address}")
 
         try:
-            # OTX provides multiple sections of data
-            # We'll aggregate the most important ones
+            # Only query general endpoint - it has most of the important data
+            # This reduces API calls from 4 to 1, avoiding timeout issues
             general = self._get_general_info(ip_address)
-            reputation = self._get_reputation(ip_address)
-            geo = self._get_geo_info(ip_address)
-            malware = self._get_malware_info(ip_address)
 
             # Combine all data
             combined_data = {
                 'ip_address': ip_address,
                 'general': general,
-                'reputation': reputation,
-                'geo': geo,
-                'malware': malware,
-                'pulse_count': general.get('pulse_info', {}).get('count', 0)
+                'pulse_count': general.get('pulse_info', {}).get('count', 0),
+                'reputation': general.get('reputation', 0)
             }
 
             logger.info(
                 f"OTX response for {ip_address}: "
                 f"pulses={combined_data['pulse_count']}, "
-                f"reputation={reputation.get('reputation', 'N/A')}"
+                f"reputation={combined_data.get('reputation', 'N/A')}"
             )
 
             return combined_data
