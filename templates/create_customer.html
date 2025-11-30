@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "macros/customer_form.html" import render_customer_form %}
+
+{% block title %}Add New Customer{% endblock %}
+
+{% block content %}
+<div class="ui container" style="margin-top: 30px;">
+    <div class="ui center aligned segment">
+        <h1 class="ui violet header">
+            <i class="plus circle icon"></i>
+            <div class="content">
+                Add New Customer
+                <div class="sub header">Register a new customer in the system</div>
+            </div>
+        </h1>
+    </div>
+
+    {% if error %}
+    <div class="ui negative message">
+        <i class="close icon"></i>
+        <div class="header">Error</div>
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <div class="ui raised segment" style="margin-top: 30px;">
+        {{ render_customer_form(button_text='Create Customer', button_icon='plus') }}
+    </div>
+</div>
+{% endblock %}

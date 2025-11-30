@@ -1,0 +1,107 @@
+{% macro render_customer_form(customer=None, action_url='', button_text='Submit', button_icon='check', show_customer_number=True) %}
+<form method="post" action="{{ action_url }}" class="ui form">
+    <h4 class="ui dividing header">Customer Information</h4>
+
+    {% if show_customer_number and not customer %}
+    <div class="two fields">
+        <div class="field required">
+            <label>Customer Number</label>
+            <input type="number" name="customerNumber" placeholder="Enter unique customer number" required>
+        </div>
+        <div class="field required">
+            <label>Company Name</label>
+            <input type="text" name="customerName" placeholder="Enter company name" required>
+        </div>
+    </div>
+    {% elif customer %}
+    <div class="field">
+        <label>Customer Number</label>
+        <input type="text" value="{{ customer[0] }}" disabled>
+        <small>Customer number cannot be changed</small>
+    </div>
+    <div class="field required">
+        <label>Company Name</label>
+        <input type="text" name="customerName" value="{{ customer[1] }}" required>
+    </div>
+    {% else %}
+    <div class="field required">
+        <label>Company Name</label>
+        <input type="text" name="customerName" placeholder="Enter company name" required>
+    </div>
+    {% endif %}
+
+    <div class="field required">
+        <label>Phone</label>
+        <input type="text" name="phone" placeholder="Enter phone number" value="{{ customer[4] if customer else '' }}" required>
+    </div>
+
+    <h4 class="ui dividing header">Contact Person</h4>
+
+    <div class="two fields">
+        <div class="field required">
+            <label>First Name</label>
+            <input type="text" name="contactFirstName" placeholder="Enter first name" value="{{ customer[3] if customer else '' }}" required>
+        </div>
+        <div class="field required">
+            <label>Last Name</label>
+            <input type="text" name="contactLastName" placeholder="Enter last name" value="{{ customer[2] if customer else '' }}" required>
+        </div>
+    </div>
+
+    <h4 class="ui dividing header">Address</h4>
+
+    <div class="field required">
+        <label>Address Line 1</label>
+        <input type="text" name="addressLine1" placeholder="Enter street address" value="{{ customer[5] if customer else '' }}" required>
+    </div>
+
+    <div class="field">
+        <label>Address Line 2</label>
+        <input type="text" name="addressLine2" placeholder="Apartment, suite, etc. (optional)" value="{{ customer[6] if customer and customer[6] else '' }}">
+    </div>
+
+    <div class="three fields">
+        <div class="field required">
+            <label>City</label>
+            <input type="text" name="city" placeholder="Enter city" value="{{ customer[7] if customer else '' }}" required>
+        </div>
+        <div class="field">
+            <label>State/Province</label>
+            <input type="text" name="state" placeholder="Enter state/province" value="{{ customer[8] if customer and customer[8] else '' }}">
+        </div>
+        <div class="field">
+            <label>Postal Code</label>
+            <input type="text" name="postalCode" placeholder="Enter postal code" value="{{ customer[9] if customer and customer[9] else '' }}">
+        </div>
+    </div>
+
+    <div class="field required">
+        <label>Country</label>
+        <input type="text" name="country" placeholder="Enter country" value="{{ customer[10] if customer else '' }}" required>
+    </div>
+
+    <h4 class="ui dividing header">Sales Information</h4>
+
+    <div class="two fields">
+        <div class="field">
+            <label>Sales Rep Employee Number</label>
+            <input type="number" name="salesRepEmployeeNumber" placeholder="Enter sales rep number (optional)" value="{{ customer[11] if customer and customer[11] else '' }}">
+        </div>
+        <div class="field">
+            <label>Credit Limit</label>
+            <input type="number" step="0.01" name="creditLimit" placeholder="Enter credit limit (optional)" value="{{ customer[12] if customer and customer[12] else '' }}">
+        </div>
+    </div>
+
+    <div class="ui center aligned segment">
+        <button type="submit" class="ui large violet button">
+            <i class="{{ button_icon }} icon"></i>
+            {{ button_text }}
+        </button>
+        <a href="{{ url_for('list_customers') }}" class="ui large button">
+            <i class="cancel icon"></i>
+            Cancel
+        </a>
+    </div>
+</form>
+{% endmacro %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}All Customers{% endblock %}
+
+{% block content %}
+<div class="ui container" style="margin-top: 30px;">
+    <div class="ui center aligned segment">
+        <h1 class="ui violet header">
+            <i class="list icon"></i>
+            <div class="content">
+                All Customers
+                <div class="sub header">Browse all customers in the database</div>
+            </div>
+        </h1>
+    </div>
+
+    <div class="ui segment" style="margin-top: 20px;">
+        <div class="ui violet message">
+            <i class="info circle icon"></i>
+            Total Customers: <strong>{{ customers|length }}</strong>
+        </div>
+
+        <table class="ui celled striped selectable table">
+            <thead>
+                <tr>
+                    <th>Customer #</th>
+                    <th>Name</th>
+                    <th>Contact Last Name</th>
+                    <th>Contact First Name</th>
+                    <th>Phone</th>
+                    <th>City</th>
+                    <th>Country</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr onclick="window.location='{{ url_for('edit_customer', customer_id=customer[0]) }}';" style="cursor: pointer;">
+                    <td><strong>{{ customer[0] }}</strong></td>
+                    <td>{{ customer[1] }}</td>
+                    <td>{{ customer[2] }}</td>
+                    <td>{{ customer[3] }}</td>
+                    <td><i class="phone icon"></i>{{ customer[4] }}</td>
+                    <td><i class="map marker icon"></i>{{ customer[5] }}</td>
+                    <td><i class="flag icon"></i>{{ customer[6] }}</td>
+                    <td onclick="event.stopPropagation();">
+                        <a href="{{ url_for('delete_customer', customer_id=customer[0]) }}"
+                           class="ui small red icon button"
+                           onclick="return confirm('Are you sure you want to delete customer #{{ customer[0] }} - {{ customer[1] }}?')">
+                            <i class="trash icon"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

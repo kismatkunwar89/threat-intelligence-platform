@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Customer Portal{% endblock %}</title>
+
+    <!-- Semantic UI CSS from CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+
+    <!-- Page-specific CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Common Navigation -->
+    {% block nav %}
+    <div class="ui inverted menu">
+        <div class="ui container">
+            <a class="header item" href="{{ url_for('home') }}">
+                <i class="home icon"></i>
+                Customer Portal
+            </a>
+        </div>
+    </div>
+    {% endblock %}
+
+    <!-- Main Content Area -->
+    <main>
+        {% block content %}
+        <!-- Child templates will put their content here -->
+        {% endblock %}
+    </main>
+
+    <!-- Common Footer -->
+    {% block footer %}
+    <div class="ui inverted vertical footer segment" style="margin-top: 50px; padding: 2em 0em;">
+        <div class="ui container">
+            <div class="ui stackable center aligned grid">
+                <div class="column">
+                    <p>&copy; 2024 Customer Portal. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    <!-- jQuery from CDN (required for Semantic UI) -->
+    <script
+        src="https://code.jquery.com/jquery-3.1.1.min.js"
+        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+        crossorigin="anonymous"></script>
+
+    <!-- Semantic UI JavaScript from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
+
+    <!-- Common JavaScript -->
+    <script>
+        $(document).ready(function() {
+            // Initialize Semantic UI dropdowns
+            $('.ui.dropdown').dropdown();
+
+            // Close message on click
+            $('.message .close').on('click', function() {
+                $(this).closest('.message').transition('fade');
+            });
+        });
+    </script>
+
+    <!-- Page-specific JavaScript -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
