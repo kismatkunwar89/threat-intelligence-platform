@@ -73,7 +73,29 @@ logger.info("")
 logger.info("🔍 THREAT INTELLIGENCE RESULTS")
 logger.info("=" * 80)
 
-risk_score = data.get('aggregate_risk_score', 0)
+# Handle both dict (from cache) and ThreatIntelResult dataclass
+if hasattr(data, 'risk_score'):
+    # It's a ThreatIntelResult dataclass
+    risk_score = data.risk_score
+    is_malicious = data.is_malicious
+    country = data.country or 'Unknown'
+    isp = data.isp or 'Unknown'
+    total_reports = data.total_reports
+    categories = data.categories
+    sources = data.sources
+    recommendation = data.recommendation
+else:
+    # It's a dict (backward compatibility)
+    risk_score = data.get('risk_score', 0)
+    is_malicious = data.get('is_malicious', False)
+    country = data.get('country', 'Unknown')
+    isp = data.get('isp', 'Unknown')
+    total_reports = data.get('total_reports', 0)
+    categories = data.get('categories', [])
+    sources = data.get('sources', [])
+    recommendation = data.get('recommendation', {})
+
+# Determine risk level
 if risk_score >= 75:
     risk_level = "🔴 HIGH RISK"
 elif risk_score >= 50:
@@ -86,17 +108,19 @@ else:
 logger.info(f"IP Address:      {normalized_ip}")
 logger.info(f"Risk Score:      {risk_score}/100")
 logger.info(f"Risk Level:      {risk_level}")
-logger.info(f"Is Malicious:    {'YES ⚠️' if data.get('is_malicious') else 'NO ✓'}")
-logger.info(f"Country:         {data.get('country', 'Unknown')}")
-logger.info(f"ISP:             {data.get('isp', 'Unknown')}")
-logger.info(f"Total Reports:   {data.get('total_reports', 0)}")
-logger.info(f"Pulse Count:     {data.get('pulse_count', 0)}")
+logger.info(f"Is Malicious:    {'YES ⚠️' if is_malicious else 'NO ✓'}")
+logger.info(f"Country:         {country}")
+logger.info(f"ISP:             {isp}")
+logger.info(f"Total Reports:   {total_reports}")
 
-categories = data.get('threat_categories', [])
+if recommendation:
+    logger.info(f"Recommendation:  {recommendation.get('action', 'N/A')} ({recommendation.get('priority', 'N/A')})")
+    logger.info(f"Justification:   {recommendation.get('justification', 'N/A')}")
+
 if categories:
     logger.info(f"Categories:      {', '.join(categories[:5])}")
 
-logger.info(f"Sources:         {', '.join(data.get('sources', []))}")
+logger.info(f"Sources:         {', '.join(sources)}")
 logger.info("=" * 80)
 
 logger.info("\n✅ Test completed successfully!")

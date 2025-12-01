@@ -7,17 +7,21 @@ This module demonstrates:
 - Database operations with context managers
 - Property decorators
 - Class methods for CRUD operations
+- Type checking with isinstance
 """
 
 import json
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
 from dataclasses import dataclass, asdict
 import logging
 from models.database import get_db_connection
 from config import Config
 
 logger = logging.getLogger(__name__)
+
+# Forward declaration - will be imported at runtime to avoid circular imports
+ThreatIntelResult = None
 
 
 @dataclass
@@ -141,23 +145,41 @@ class CacheManager:
             return None
 
     @staticmethod
-    def set_cache(ip_address: str, threat_data: Dict[str, Any],
+    def set_cache(ip_address: str, threat_data: Union[Dict[str, Any], Any],
                   ttl_seconds: Optional[int] = None) -> bool:
         """
         Store threat intelligence data in cache.
 
+        Now handles both dict and ThreatIntelResult dataclass objects.
+        If ThreatIntelResult is provided, it's automatically serialized to dict.
+
         Args:
             ip_address: IP address to cache
-            threat_data: Threat intelligence data to store
+            threat_data: Threat intelligence data (dict or ThreatIntelResult dataclass)
             ttl_seconds: Time to live in seconds (default from config)
 
         Returns:
             bool: True if successful, False otherwise
         """
         try:
+            # Import here to avoid circular dependency
+            global ThreatIntelResult
+            if ThreatIntelResult is None:
+                from models.threat_intel_result import ThreatIntelResult as TIR
+                ThreatIntelResult = TIR
+
             ttl = ttl_seconds or Config.CACHE_TTL_SECONDS
             created_at = datetime.now()
             expires_at = created_at + timedelta(seconds=ttl)
+
+            # Handle both dict and ThreatIntelResult dataclass
+            if hasattr(threat_data, 'to_dict'):
+                # It's a ThreatIntelResult dataclass
+                data_dict = threat_data.to_dict()
+                logger.debug(f"Serializing ThreatIntelResult dataclass for {ip_address}")
+            else:
+                # It's already a dict (backward compatibility)
+                data_dict = threat_data
 
             with get_db_connection() as conn:
                 cursor = conn.cursor()
@@ -168,7 +190,7 @@ class CacheManager:
                 """
                 cursor.execute(query, (
                     ip_address,
-                    json.dumps(threat_data),
+                    json.dumps(data_dict),
                     created_at,
                     expires_at
                 ))

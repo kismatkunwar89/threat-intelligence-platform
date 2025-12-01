@@ -7,11 +7,14 @@ This module demonstrates:
 - Data transformation and normalization
 - Functional programming patterns
 - Type hints with TypedDict
+- Dataclass integration
 """
 
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import logging
+from models.threat_intel_result import ThreatIntelResult
+from utils.recommendation_engine import generate_recommendation
 
 logger = logging.getLogger(__name__)
 
@@ -289,20 +292,24 @@ class ThreatIntelAggregator:
     """
 
     @staticmethod
-    def aggregate(normalized_responses: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def aggregate(normalized_responses: List[Dict[str, Any]]) -> ThreatIntelResult:
         """
         Aggregate multiple normalized threat intel responses.
 
+        This method now returns a ThreatIntelResult dataclass instead of dict,
+        establishing the canonical schema as the single source of truth.
+
         Args:
-            normalized_responses: List of normalized responses
+            normalized_responses: List of normalized responses from APIs
 
         Returns:
-            dict: Merged threat intelligence data
+            ThreatIntelResult: Canonical dataclass with aggregated data
         """
         logger.info(f"Aggregating {len(normalized_responses)} threat intel sources")
 
         if not normalized_responses:
-            return ThreatIntelSchema.get_empty_schema()
+            # Return empty ThreatIntelResult with IP address unknown
+            return ThreatIntelResult(ip_address="unknown")
 
         # Start with first response as base
         aggregated = normalized_responses[0].copy()
@@ -324,7 +331,38 @@ class ThreatIntelAggregator:
             f"Aggregation complete: Final risk score={aggregated['risk_score']}"
         )
 
-        return aggregated
+        # Generate recommendation (addresses PRD Success Metric #1)
+        recommendation = generate_recommendation(
+            risk_score=aggregated['risk_score'],
+            confidence_score=0,  # Will be calculated in Session 2
+            total_reports=aggregated['total_reports'],
+            is_malicious=aggregated['is_malicious']
+        )
+
+        # Convert aggregated dict to canonical ThreatIntelResult dataclass
+        result = ThreatIntelResult(
+            ip_address=aggregated['ip_address'],
+            risk_score=aggregated['risk_score'],
+            is_malicious=aggregated['is_malicious'],
+            country=aggregated.get('country'),
+            country_code=aggregated.get('country_code'),
+            isp=aggregated.get('isp'),
+            domain=aggregated.get('domain'),
+            total_reports=aggregated['total_reports'],
+            last_reported=aggregated.get('last_reported'),
+            categories=aggregated['categories'],
+            threat_types=aggregated['threat_types'],
+            sources=aggregated['sources'],
+            recommendation=recommendation,
+            raw_data=aggregated['raw_data']
+        )
+
+        logger.info(
+            f"Converted to ThreatIntelResult dataclass: "
+            f"IP={result.ip_address}, Recommendation={result.recommendation_action}"
+        )
+
+        return result
 
     @staticmethod
     def _merge_responses(base: Dict[str, Any],
@@ -398,6 +436,11 @@ def normalize_otx(response: Dict[str, Any]) -> Dict[str, Any]:
     return OTXNormalizer.normalize(response)
 
 
-def aggregate_threat_intel(responses: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Convenience function for aggregating normalized responses."""
+def aggregate_threat_intel(responses: List[Dict[str, Any]]) -> ThreatIntelResult:
+    """
+    Convenience function for aggregating normalized responses.
+
+    Returns:
+        ThreatIntelResult: Canonical dataclass (changed from dict in this session)
+    """
     return ThreatIntelAggregator.aggregate(responses)

@@ -117,6 +117,23 @@
             </div>
             {% endif %}
 
+            <!-- Export Actions -->
+            <div class="card" style="text-align: center; margin-top: 30px;">
+                <h2>📥 Export Results</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Download threat intelligence data in multiple formats</p>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <a href="{{ url_for('threat_intel.export_json', ip=ip_address) }}" class="btn" style="min-width: 120px;">
+                        📄 JSON
+                    </a>
+                    <a href="{{ url_for('threat_intel.export_csv', ip=ip_address) }}" class="btn" style="min-width: 120px;">
+                        📊 CSV
+                    </a>
+                    <a href="{{ url_for('threat_intel.export_pdf', ip=ip_address) }}" class="btn" style="min-width: 120px;">
+                        📑 PDF Report
+                    </a>
+                </div>
+            </div>
+
             <!-- Actions -->
             <div style="text-align: center; margin-top: 40px;">
                 <a href="{{ url_for('threat_intel.index') }}" class="btn">🔍 Analyze Another IP</a>
