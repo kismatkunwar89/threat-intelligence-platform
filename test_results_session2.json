@@ -1,0 +1,226 @@
+{
+  "test_run": "2025-12-01T12:08:25.779943",
+  "test_count": 3,
+  "results": [
+    {
+      "ip_address": "8.8.8.8",
+      "description": "Google DNS - Known safe",
+      "risk_score": 0,
+      "confidence_score": 90,
+      "is_malicious": false,
+      "sources": [
+        "AbuseIPDB",
+        "GreyNoise",
+        "AlienVault OTX",
+        "VirusTotal"
+      ],
+      "source_count": 4,
+      "total_reports": 157,
+      "country": "United States of America",
+      "isp": "Google LLC",
+      "categories": [
+        "Bad Web Bot",
+        "Exploited Host",
+        "Fraud VoIP",
+        "Port Scan",
+        "Brute-Force"
+      ],
+      "threat_types": [
+        "RIOT",
+        "abuse"
+      ],
+      "recommendation": {
+        "action": "ALLOW",
+        "priority": "LOW",
+        "justification": "Risk score: 0/100 | Confidence: 90% (VERY HIGH) | 157 report(s) from threat intelligence sources | High confidence assessment from multiple agreeing sources",
+        "confidence_level": "VERY HIGH",
+        "confidence_note": "High confidence assessment from multiple agreeing sources"
+      },
+      "mitre_attack_count": 16,
+      "mitre_attack": [
+        {
+          "id": "T1595.002",
+          "name": "Vulnerability Scanning",
+          "tactic": "Reconnaissance"
+        },
+        {
+          "id": "T1190",
+          "name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access"
+        },
+        {
+          "id": "T1059",
+          "name": "Command and Scripting Interpreter",
+          "tactic": "Execution"
+        },
+        {
+          "id": "T1583",
+          "name": "Acquire Infrastructure",
+          "tactic": "Resource Development"
+        },
+        {
+          "id": "T1595.001",
+          "name": "Scanning IP Blocks",
+          "tactic": "Reconnaissance"
+        }
+      ],
+      "kill_chain_stages": [
+        "1. Reconnaissance",
+        "3. Delivery",
+        "4. Exploitation",
+        "5. Installation",
+        "6. Command & Control",
+        "7. Actions on Objectives"
+      ],
+      "timestamp": "2025-12-01T12:08:10.304993"
+    },
+    {
+      "ip_address": "1.1.1.1",
+      "description": "Cloudflare DNS - Known safe",
+      "risk_score": 0,
+      "confidence_score": 90,
+      "is_malicious": false,
+      "sources": [
+        "AbuseIPDB",
+        "GreyNoise",
+        "AlienVault OTX",
+        "VirusTotal"
+      ],
+      "source_count": 4,
+      "total_reports": 454,
+      "country": "Hong Kong",
+      "isp": "APNIC and Cloudflare DNS Resolver project",
+      "categories": [
+        "DDoS Attack",
+        "Bad Web Bot",
+        "Fraud VoIP",
+        "IoT Targeted",
+        "FTP Brute-Force"
+      ],
+      "threat_types": [
+        "RIOT",
+        "abuse",
+        "suspicious-udp"
+      ],
+      "recommendation": {
+        "action": "ALLOW",
+        "priority": "LOW",
+        "justification": "Risk score: 0/100 | Confidence: 90% (VERY HIGH) | 454 report(s) from threat intelligence sources | High confidence assessment from multiple agreeing sources",
+        "confidence_level": "VERY HIGH",
+        "confidence_note": "High confidence assessment from multiple agreeing sources"
+      },
+      "mitre_attack_count": 24,
+      "mitre_attack": [
+        {
+          "id": "T1498",
+          "name": "Network Denial of Service",
+          "tactic": "Impact"
+        },
+        {
+          "id": "T1595.002",
+          "name": "Vulnerability Scanning",
+          "tactic": "Reconnaissance"
+        },
+        {
+          "id": "T1190",
+          "name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access"
+        },
+        {
+          "id": "T1583",
+          "name": "Acquire Infrastructure",
+          "tactic": "Resource Development"
+        },
+        {
+          "id": "T1110.001",
+          "name": "Password Guessing",
+          "tactic": "Credential Access"
+        }
+      ],
+      "kill_chain_stages": [
+        "1. Reconnaissance",
+        "3. Delivery",
+        "4. Exploitation",
+        "5. Installation",
+        "6. Command & Control",
+        "7. Actions on Objectives"
+      ],
+      "timestamp": "2025-12-01T12:08:13.658887"
+    },
+    {
+      "ip_address": "185.220.101.1",
+      "description": "Known Tor exit node - Likely malicious",
+      "risk_score": 94,
+      "confidence_score": 83,
+      "is_malicious": true,
+      "sources": [
+        "AbuseIPDB",
+        "GreyNoise",
+        "AlienVault OTX",
+        "VirusTotal"
+      ],
+      "source_count": 4,
+      "total_reports": 249,
+      "country": "Germany",
+      "isp": "Artikel10 e.V.",
+      "categories": [
+        "DDoS Attack",
+        "Bad Web Bot",
+        "LAMP",
+        "FTP Brute-Force",
+        "Blog Spam"
+      ],
+      "threat_types": [
+        "LAMP",
+        "malware",
+        "webscan",
+        "description ip",
+        "cowrie"
+      ],
+      "recommendation": {
+        "action": "BLOCK",
+        "priority": "CRITICAL",
+        "justification": "Risk score: 94/100 | Confidence: 83% (VERY HIGH) | 249 report(s) from threat intelligence sources | Flagged as malicious by one or more sources | High confidence assessment from multiple agreeing sources",
+        "confidence_level": "VERY HIGH",
+        "confidence_note": "High confidence assessment from multiple agreeing sources"
+      },
+      "mitre_attack_count": 22,
+      "mitre_attack": [
+        {
+          "id": "T1498",
+          "name": "Network Denial of Service",
+          "tactic": "Impact"
+        },
+        {
+          "id": "T1595.002",
+          "name": "Vulnerability Scanning",
+          "tactic": "Reconnaissance"
+        },
+        {
+          "id": "T1190",
+          "name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access"
+        },
+        {
+          "id": "T1110.001",
+          "name": "Password Guessing",
+          "tactic": "Credential Access"
+        },
+        {
+          "id": "T1566",
+          "name": "Phishing",
+          "tactic": "Initial Access"
+        }
+      ],
+      "kill_chain_stages": [
+        "1. Reconnaissance",
+        "3. Delivery",
+        "4. Exploitation",
+        "5. Installation",
+        "6. Command & Control",
+        "7. Actions on Objectives"
+      ],
+      "timestamp": "2025-12-01T12:08:25.777961"
+    }
+  ]
+}

@@ -44,6 +44,8 @@ class Config:
     # API Keys
     ABUSEIPDB_API_KEY: Optional[str] = os.getenv('ABUSEIPDB_API_KEY')
     OTX_API_KEY: Optional[str] = os.getenv('OTX_API_KEY')
+    VIRUSTOTAL_API_KEY: Optional[str] = os.getenv('VIRUSTOTAL_API_KEY')
+    GREYNOISE_API_KEY: Optional[str] = os.getenv('GREYNOISE_API_KEY')
 
     # Cache Configuration
     CACHE_TTL_SECONDS: int = int(os.getenv('CACHE_TTL_SECONDS', '3600'))
@@ -146,7 +148,9 @@ class Config:
             'api_timeout': cls.API_TIMEOUT_SECONDS,
             'max_retries': cls.MAX_RETRIES,
             'abuseipdb_configured': bool(cls.ABUSEIPDB_API_KEY),
-            'otx_configured': bool(cls.OTX_API_KEY)
+            'otx_configured': bool(cls.OTX_API_KEY),
+            'virustotal_configured': bool(cls.VIRUSTOTAL_API_KEY),
+            'greynoise_configured': bool(cls.GREYNOISE_API_KEY)
         }
 
 

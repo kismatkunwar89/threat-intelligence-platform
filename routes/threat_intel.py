@@ -26,11 +26,17 @@ from models.cache import CacheManager
 from models.threat_intel_result import ThreatIntelResult
 from services.abuseipdb_client import AbuseIPDBClient
 from services.otx_client import OTXClient
+from services.virustotal_client import VirusTotalClient
+from services.greynoise_client import GreyNoiseClient
 from utils.normalizer import (
     normalize_abuseipdb,
     normalize_otx,
+    normalize_virustotal,
+    normalize_greynoise,
     aggregate_threat_intel
 )
+from utils.mitre_mapper import map_to_mitre_attack
+from utils.kill_chain_mapper import map_to_kill_chain
 from config import Config
 
 # Create blueprint
@@ -118,7 +124,8 @@ def lookup():
         )
 
     except Exception as e:
-        logger.error(f"Error fetching threat intel for {normalized_ip}: {e}", exc_info=True)
+        logger.error(
+            f"Error fetching threat intel for {normalized_ip}: {e}", exc_info=True)
         flash(f"Error fetching threat intelligence: {str(e)}", "error")
         return redirect(url_for('threat_intel.index'))
 
@@ -170,13 +177,59 @@ def _fetch_threat_intel(ip_address: str) -> ThreatIntelResult:
         logger.error(f"Error fetching from OTX: {e}")
         # Continue with available data
 
+    # Fetch from VirusTotal
+    try:
+        if Config.VIRUSTOTAL_API_KEY and Config.VIRUSTOTAL_API_KEY != "your_virustotal_api_key_here":
+            logger.info(f"Querying VirusTotal for {ip_address}")
+            vt_client = VirusTotalClient()
+            vt_response = vt_client.check_ip(ip_address)
+            if vt_response:  # May be None if rate limited
+                normalized_vt = normalize_virustotal(vt_response)
+                normalized_responses.append(normalized_vt)
+                logger.info("VirusTotal data fetched successfully")
+            else:
+                logger.warning("VirusTotal rate limit or error - skipping")
+        else:
+            logger.warning("VirusTotal API key not configured - skipping")
+    except Exception as e:
+        logger.error(f"Error fetching from VirusTotal: {e}")
+        # Continue with available data
+
+    # Fetch from GreyNoise (Community API - no key required)
+    try:
+        logger.info(f"Querying GreyNoise for {ip_address}")
+        gn_client = GreyNoiseClient()
+        gn_response = gn_client.check_ip(ip_address)
+        if gn_response:
+            normalized_gn = normalize_greynoise(gn_response)
+            normalized_responses.append(normalized_gn)
+            logger.info(
+                f"GreyNoise data fetched: classification={gn_response.get('classification', 'unknown')}")
+        else:
+            logger.warning("GreyNoise returned no data - skipping")
+    except Exception as e:
+        logger.error(f"Error fetching from GreyNoise: {e}")
+        # Continue with available data
+
     # Check if we got any data
     if not normalized_responses:
-        raise Exception("No threat intelligence data available. Please configure API keys.")
+        raise Exception(
+            "No threat intelligence data available. Please configure API keys.")
 
     # Aggregate the responses
-    logger.info(f"Aggregating {len(normalized_responses)} threat intel sources")
+    logger.info(
+        f"Aggregating {len(normalized_responses)} threat intel sources")
     aggregated_data = aggregate_threat_intel(normalized_responses)
+
+    # Add MITRE ATT&CK mapping
+    mitre_techniques = map_to_mitre_attack(aggregated_data.to_dict())
+    aggregated_data.mitre_attack = mitre_techniques
+    logger.info(f"Mapped to {len(mitre_techniques)} MITRE ATT&CK techniques")
+
+    # Add Kill Chain mapping
+    kill_chain_stages = map_to_kill_chain(aggregated_data.to_dict())
+    aggregated_data.kill_chain_stages = kill_chain_stages
+    logger.info(f"Mapped to {len(kill_chain_stages)} Kill Chain stages")
 
     return aggregated_data
 
@@ -219,7 +272,8 @@ def export_json(ip: str):
             logger.info(f"Using cached data for JSON export: {normalized_ip}")
             data = cached.threat_data
         else:
-            logger.info(f"Fetching fresh data for JSON export: {normalized_ip}")
+            logger.info(
+                f"Fetching fresh data for JSON export: {normalized_ip}")
             data = _fetch_threat_intel(normalized_ip)
             CacheManager.set_cache(normalized_ip, data)
 
@@ -233,7 +287,8 @@ def export_json(ip: str):
         json_str = json.dumps(data_dict, indent=2, ensure_ascii=False)
         response = make_response(json_str)
         response.headers['Content-Type'] = 'application/json'
-        response.headers['Content-Disposition'] = f'attachment; filename=threat_intel_{normalized_ip}.json'
+        response.headers[
+            'Content-Disposition'] = f'attachment; filename=threat_intel_{normalized_ip}.json'
 
         logger.info(f"JSON export completed for {normalized_ip}")
         return response
@@ -295,7 +350,8 @@ def export_csv(ip: str):
                 value_str = ' | '.join(str(v) for v in value) if value else ''
             elif isinstance(value, dict):
                 # For nested dicts (like recommendation), format as key: value pairs
-                value_str = ' | '.join(f"{k}: {v}" for k, v in value.items()) if value else ''
+                value_str = ' | '.join(
+                    f"{k}: {v}" for k, v in value.items()) if value else ''
             elif value is None:
                 value_str = 'N/A'
             else:
@@ -307,7 +363,8 @@ def export_csv(ip: str):
         csv_data = output.getvalue()
         response = make_response(csv_data)
         response.headers['Content-Type'] = 'text/csv'
-        response.headers['Content-Disposition'] = f'attachment; filename=threat_intel_{normalized_ip}.csv'
+        response.headers[
+            'Content-Disposition'] = f'attachment; filename=threat_intel_{normalized_ip}.csv'
 
         logger.info(f"CSV export completed for {normalized_ip}")
         return response
@@ -363,7 +420,7 @@ def export_pdf(ip: str):
         # Generate PDF
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter,
-                               topMargin=0.75*inch, bottomMargin=0.75*inch)
+                                topMargin=0.75*inch, bottomMargin=0.75*inch)
 
         # Container for PDF elements
         elements = []
@@ -390,26 +447,33 @@ def export_pdf(ip: str):
 
         # Title
         elements.append(Paragraph("THREAT INTELLIGENCE REPORT", title_style))
-        elements.append(Paragraph(f"IP Address: {normalized_ip}", styles['Normal']))
-        elements.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}", styles['Normal']))
+        elements.append(
+            Paragraph(f"IP Address: {normalized_ip}", styles['Normal']))
+        elements.append(Paragraph(
+            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}", styles['Normal']))
         elements.append(Spacer(1, 0.3*inch))
 
         # Risk Assessment Section
         elements.append(Paragraph("RISK ASSESSMENT", heading_style))
 
         risk_score = data_dict.get('risk_score', 0)
+        confidence_score = data_dict.get('confidence_score', 0)
         risk_level = "HIGH RISK" if risk_score >= 75 else "MEDIUM RISK" if risk_score >= 50 else "LOW RISK" if risk_score >= 25 else "CLEAN"
+        confidence_level = "VERY HIGH" if confidence_score >= 80 else "HIGH" if confidence_score >= 60 else "MEDIUM" if confidence_score >= 40 else "LOW"
         risk_color = colors.red if risk_score >= 75 else colors.orange if risk_score >= 50 else colors.yellow if risk_score >= 25 else colors.green
 
         assessment_data = [
             ['Metric', 'Value'],
             ['Risk Score', f"{risk_score}/100"],
             ['Risk Level', risk_level],
+            ['Confidence Score', f"{confidence_score}%"],
+            ['Confidence Level', confidence_level],
             ['Malicious', 'YES' if data_dict.get('is_malicious') else 'NO'],
             ['Total Reports', str(data_dict.get('total_reports', 0))],
         ]
 
-        assessment_table = Table(assessment_data, colWidths=[2.5*inch, 3.5*inch])
+        assessment_table = Table(
+            assessment_data, colWidths=[2.5*inch, 3.5*inch])
         assessment_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a73e8')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -464,18 +528,129 @@ def export_pdf(ip: str):
         elements.append(Paragraph(intel_text, styles['Normal']))
         elements.append(Spacer(1, 0.2*inch))
 
+        # MITRE ATT&CK Section
+        mitre_attack = data_dict.get('mitre_attack', [])
+        if mitre_attack:
+            elements.append(
+                Paragraph("MITRE ATT&CK TECHNIQUES", heading_style))
+
+            mitre_data = [['Technique ID', 'Name', 'Tactic']]
+            for technique in mitre_attack[:10]:  # Limit to top 10
+                mitre_data.append([
+                    technique.get('id', 'N/A'),
+                    technique.get('name', 'N/A'),
+                    technique.get('tactic', 'N/A')
+                ])
+
+            if len(mitre_attack) > 10:
+                mitre_data.append(
+                    ['...', f'+ {len(mitre_attack) - 10} more techniques', ''])
+
+            mitre_table = Table(mitre_data, colWidths=[
+                                1.5*inch, 2.5*inch, 2*inch])
+            mitre_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d32f2f')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#ffebee')),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d32f2f'))
+            ]))
+            elements.append(mitre_table)
+            elements.append(Paragraph(
+                f"<i>Total: {len(mitre_attack)} technique(s) mapped | Reference: attack.mitre.org</i>",
+                ParagraphStyle(
+                    'MitreNote', parent=styles['Normal'], fontSize=8, textColor=colors.grey)
+            ))
+            elements.append(Spacer(1, 0.2*inch))
+
+        # Kill Chain Section
+        kill_chain_stages = data_dict.get('kill_chain_stages', [])
+        elements.append(Paragraph("CYBER KILL CHAIN ANALYSIS", heading_style))
+
+        all_stages = [
+            '1. Reconnaissance',
+            '2. Weaponization',
+            '3. Delivery',
+            '4. Exploitation',
+            '5. Installation',
+            '6. Command & Control',
+            '7. Actions on Objectives'
+        ]
+
+        kc_data = [['Stage', 'Status']]
+        for stage in all_stages:
+            status = '● IDENTIFIED' if stage in kill_chain_stages else '○ Not Detected'
+            kc_data.append([stage, status])
+
+        kc_table = Table(kc_data, colWidths=[3*inch, 3*inch])
+
+        # Build row styles dynamically
+        kc_style = [
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#ff6f00')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#ff6f00'))
+        ]
+
+        # Highlight identified stages
+        for i, stage in enumerate(all_stages, start=1):
+            if stage in kill_chain_stages:
+                kc_style.append(('BACKGROUND', (0, i), (-1, i),
+                                colors.HexColor('#fff3e0')))
+                kc_style.append(('TEXTCOLOR', (1, i), (1, i),
+                                colors.HexColor('#e65100')))
+                kc_style.append(('FONTNAME', (1, i), (1, i), 'Helvetica-Bold'))
+            else:
+                kc_style.append(('BACKGROUND', (0, i), (-1, i),
+                                colors.HexColor('#fafafa')))
+                kc_style.append(('TEXTCOLOR', (1, i), (1, i), colors.grey))
+
+        kc_table.setStyle(TableStyle(kc_style))
+        elements.append(kc_table)
+
+        if kill_chain_stages:
+            progression = f"Attack spans {len(kill_chain_stages)} stage(s): {', '.join(kill_chain_stages)}"
+        else:
+            progression = "No Kill Chain stages identified for this indicator."
+        elements.append(Paragraph(
+            f"<i>{progression} | Reference: Lockheed Martin Cyber Kill Chain</i>",
+            ParagraphStyle(
+                'KCNote', parent=styles['Normal'], fontSize=8, textColor=colors.grey)
+        ))
+        elements.append(Spacer(1, 0.2*inch))
+
         # Recommendation Section
         recommendation = data_dict.get('recommendation', {})
         if recommendation:
             elements.append(Paragraph("RECOMMENDATION", heading_style))
 
+            # Create a style for wrapped text in table cells
+            cell_style = ParagraphStyle(
+                'CellText',
+                parent=styles['Normal'],
+                fontSize=10,
+                leading=12
+            )
+
             rec_data = [
                 ['Action', recommendation.get('action', 'N/A')],
                 ['Priority', recommendation.get('priority', 'N/A')],
-                ['Justification', recommendation.get('justification', 'N/A')],
+                ['Justification', Paragraph(recommendation.get(
+                    'justification', 'N/A'), cell_style)],
             ]
 
-            rec_table = Table(rec_data, colWidths=[2.5*inch, 3.5*inch])
+            # Add confidence note if present
+            if recommendation.get('confidence_note'):
+                rec_data.append(
+                    ['Confidence Note', Paragraph(recommendation.get('confidence_note'), cell_style)])
+
+            rec_table = Table(rec_data, colWidths=[1.8*inch, 4.2*inch])
             rec_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#1a73e8')),
                 ('TEXTCOLOR', (0, 0), (0, -1), colors.whitesmoke),
@@ -491,7 +666,7 @@ def export_pdf(ip: str):
         # Footer
         elements.append(Spacer(1, 0.3*inch))
         footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8,
-                                     textColor=colors.grey, alignment=TA_CENTER)
+                                      textColor=colors.grey, alignment=TA_CENTER)
         elements.append(Paragraph(
             "Generated by Threat Intel Lookup | For authorized security operations only",
             footer_style
