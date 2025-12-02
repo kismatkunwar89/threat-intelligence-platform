@@ -22,37 +22,79 @@
             </div>
             {% endif %}
 
-            <!-- Risk Score Card -->
+            <!-- Risk Score Card with Visual Gauge -->
             <div class="card" style="text-align: center;">
                 <h2>Overall Risk Assessment</h2>
                 {% set risk_score = threat_data.risk_score | default(0) %}
                 {% set confidence_score = threat_data.confidence_score | default(0) %}
-                {% if risk_score < 25 %} <div class="risk-badge risk-low">{{ risk_score }}
-            </div>
-            <p style="color: var(--safe-green); margin-top: 15px; font-size: 1.2em;">✅ LOW RISK</p>
-            {% elif risk_score < 75 %} <div class="risk-badge risk-medium">{{ risk_score }}
-    </div>
-    <p style="color: var(--warning-orange); margin-top: 15px; font-size: 1.2em;">⚠️ MEDIUM RISK</p>
-    {% else %}
-    <div class="risk-badge risk-high">{{ risk_score }}</div>
-    <p style="color: var(--danger-red); margin-top: 15px; font-size: 1.2em;">🚨 HIGH RISK</p>
-    {% endif %}
 
-    <!-- Confidence Score -->
-    <div style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 255, 0.1); border-radius: 8px;">
-        <p style="color: var(--text-secondary); margin-bottom: 5px;">Confidence Level</p>
-        {% if confidence_score >= 80 %}
-        <p style="color: var(--safe-green); font-size: 1.1em; font-weight: bold;">🎯 {{ confidence_score }}% - VERY HIGH
-        </p>
-        {% elif confidence_score >= 60 %}
-        <p style="color: var(--accent-cyan); font-size: 1.1em; font-weight: bold;">✓ {{ confidence_score }}% - HIGH</p>
-        {% elif confidence_score >= 40 %}
-        <p style="color: var(--warning-orange); font-size: 1.1em; font-weight: bold;">◐ {{ confidence_score }}% - MEDIUM
-        </p>
-        {% else %}
-        <p style="color: var(--danger-red); font-size: 1.1em; font-weight: bold;">⚠ {{ confidence_score }}% - LOW</p>
-        {% endif %}
-    </div>
+                <!-- Circular Risk Gauge -->
+                <div style="position: relative; width: 200px; height: 200px; margin: 20px auto;">
+                    <svg width="200" height="200" viewBox="0 0 200 200">
+                        <!-- Background circle -->
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="20"/>
+
+                        <!-- Progress circle -->
+                        {% if risk_score < 25 %}
+                            {% set stroke_color = "#00ff00" %}
+                        {% elif risk_score < 75 %}
+                            {% set stroke_color = "#ffa500" %}
+                        {% else %}
+                            {% set stroke_color = "#ff0000" %}
+                        {% endif %}
+                        <circle cx="100" cy="100" r="80" fill="none"
+                                stroke="{{ stroke_color }}" stroke-width="20"
+                                stroke-dasharray="{{ (risk_score / 100 * 502) }} 502"
+                                stroke-dashoffset="125.5"
+                                transform="rotate(-90 100 100)"
+                                style="transition: stroke-dasharray 1s ease;"/>
+
+                        <!-- Center text -->
+                        <text x="100" y="95" text-anchor="middle" font-size="36" font-weight="bold" fill="{{ stroke_color }}">
+                            {{ risk_score }}
+                        </text>
+                        <text x="100" y="115" text-anchor="middle" font-size="14" fill="var(--text-secondary)">
+                            / 100
+                        </text>
+                    </svg>
+                </div>
+
+                {% if risk_score < 25 %}
+                    <p style="color: var(--safe-green); margin-top: 15px; font-size: 1.2em;">✅ LOW RISK</p>
+                {% elif risk_score < 75 %}
+                    <p style="color: var(--warning-orange); margin-top: 15px; font-size: 1.2em;">⚠️ MEDIUM RISK</p>
+                {% else %}
+                    <p style="color: var(--danger-red); margin-top: 15px; font-size: 1.2em;">🚨 HIGH RISK</p>
+                {% endif %}
+
+                <!-- Confidence Score with Progress Bar -->
+                <div style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 255, 0.1); border-radius: 8px;">
+                    <p style="color: var(--text-secondary); margin-bottom: 10px;">Confidence Level</p>
+
+                    <!-- Progress bar -->
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 10px; height: 20px; overflow: hidden; margin-bottom: 10px;">
+                        {% if confidence_score >= 80 %}
+                            {% set conf_color = "#00ff00" %}
+                        {% elif confidence_score >= 60 %}
+                            {% set conf_color = "#00ffff" %}
+                        {% elif confidence_score >= 40 %}
+                            {% set conf_color = "#ffa500" %}
+                        {% else %}
+                            {% set conf_color = "#ff0000" %}
+                        {% endif %}
+                        <div style="width: {{ confidence_score }}%; height: 100%; background: linear-gradient(90deg, {{ conf_color }}, {{ conf_color }}88); transition: width 1s ease;"></div>
+                    </div>
+
+                    {% if confidence_score >= 80 %}
+                        <p style="color: var(--safe-green); font-size: 1.1em; font-weight: bold;">🎯 {{ confidence_score }}% - VERY HIGH</p>
+                    {% elif confidence_score >= 60 %}
+                        <p style="color: var(--accent-cyan); font-size: 1.1em; font-weight: bold;">✓ {{ confidence_score }}% - HIGH</p>
+                    {% elif confidence_score >= 40 %}
+                        <p style="color: var(--warning-orange); font-size: 1.1em; font-weight: bold;">◐ {{ confidence_score }}% - MEDIUM</p>
+                    {% else %}
+                        <p style="color: var(--danger-red); font-size: 1.1em; font-weight: bold;">⚠ {{ confidence_score }}% - LOW</p>
+                    {% endif %}
+                </div>
 
     <p style="color: var(--text-secondary); margin-top: 10px;">
         {% if threat_data.is_malicious %}
@@ -170,6 +212,48 @@
         </div>
     </div>
 
+    <!-- Source Health Dashboard -->
+    <div class="card">
+        <h2>📡 API Source Health</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Status of threat intelligence data providers</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            {% set all_sources = ['AbuseIPDB', 'AlienVault OTX', 'VirusTotal', 'GreyNoise'] %}
+            {% for api_source in all_sources %}
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; border-left: 4px solid {{ '#00ff00' if api_source in threat_data.sources else '#ff0000' }};">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-weight: bold;">{{ api_source }}</span>
+                        {% if api_source in threat_data.sources %}
+                            <span style="color: #00ff00; font-size: 1.2em;">✓</span>
+                        {% else %}
+                            <span style="color: #ff0000; font-size: 1.2em;">✗</span>
+                        {% endif %}
+                    </div>
+                    <div style="font-size: 0.9em; color: var(--text-secondary);">
+                        {% if api_source in threat_data.sources %}
+                            <span style="color: #00ff00;">● Online</span>
+                        {% else %}
+                            <span style="color: #888;">● No Response</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 15px; padding: 10px; background: rgba(0, 255, 255, 0.1); border-radius: 5px; text-align: center;">
+            <span style="color: var(--accent-cyan); font-weight: bold;">
+                {{ threat_data.sources | length }}/4 sources responded
+            </span>
+            {% if threat_data.sources | length == 4 %}
+                <span style="margin-left: 10px; color: #00ff00;">🎯 Full Coverage</span>
+            {% elif threat_data.sources | length >= 3 %}
+                <span style="margin-left: 10px; color: #ffa500;">⚠ Good Coverage</span>
+            {% else %}
+                <span style="margin-left: 10px; color: #ff0000;">⚠ Limited Data</span>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Threat Categories -->
     {% if threat_data.categories or threat_data.threat_types %}
     <div class="card">
@@ -244,6 +328,17 @@
                     🔗 Cyber Kill Chain Stages
                 </h3>
                 {% if threat_data.kill_chain_stages and threat_data.kill_chain_stages | length > 0 %}
+
+                <!-- Progress Indicator -->
+                <div style="margin-bottom: 15px; padding: 10px; background: rgba(255, 165, 0, 0.1); border-radius: 5px; text-align: center;">
+                    <div style="color: var(--warning-orange); font-weight: bold; margin-bottom: 5px;">
+                        {{ threat_data.kill_chain_stages | length }}/7 Stages Detected
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); height: 10px; border-radius: 5px; overflow: hidden;">
+                        <div style="width: {{ (threat_data.kill_chain_stages | length / 7 * 100) }}%; height: 100%; background: linear-gradient(90deg, #ffa500, #ff6600);"></div>
+                    </div>
+                </div>
+
                 <p style="color: var(--text-secondary); margin-bottom: 10px;">
                     Attack spans {{ threat_data.kill_chain_stages | length }} stage(s):
                 </p>
