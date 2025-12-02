@@ -453,7 +453,7 @@ def export_pdf(ip: str):
             f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}", styles['Normal']))
         elements.append(Spacer(1, 0.3*inch))
 
-        # Risk Assessment Section
+        # Risk Assessment Section with Visual Gauges
         elements.append(Paragraph("RISK ASSESSMENT", heading_style))
 
         risk_score = data_dict.get('risk_score', 0)
@@ -461,7 +461,38 @@ def export_pdf(ip: str):
         risk_level = "HIGH RISK" if risk_score >= 75 else "MEDIUM RISK" if risk_score >= 50 else "LOW RISK" if risk_score >= 25 else "CLEAN"
         confidence_level = "VERY HIGH" if confidence_score >= 80 else "HIGH" if confidence_score >= 60 else "MEDIUM" if confidence_score >= 40 else "LOW"
         risk_color = colors.red if risk_score >= 75 else colors.orange if risk_score >= 50 else colors.yellow if risk_score >= 25 else colors.green
+        conf_color = colors.green if confidence_score >= 80 else colors.cyan if confidence_score >= 60 else colors.orange if confidence_score >= 40 else colors.red
 
+        # Create visual progress bars
+        from reportlab.graphics.shapes import Drawing, Rect, String
+        from reportlab.graphics import renderPDF
+
+        # Risk Score Bar
+        risk_drawing = Drawing(400, 60)
+        # Background bar
+        risk_drawing.add(Rect(0, 30, 300, 20, fillColor=colors.lightgrey, strokeColor=colors.black))
+        # Progress bar
+        risk_drawing.add(Rect(0, 30, risk_score * 3, 20, fillColor=risk_color, strokeColor=None))
+        # Label
+        risk_drawing.add(String(150, 10, f"Risk Score: {risk_score}/100 - {risk_level}",
+                               fontSize=12, fillColor=colors.black, textAnchor='middle'))
+
+        # Confidence Score Bar
+        conf_drawing = Drawing(400, 60)
+        # Background bar
+        conf_drawing.add(Rect(0, 30, 300, 20, fillColor=colors.lightgrey, strokeColor=colors.black))
+        # Progress bar
+        conf_drawing.add(Rect(0, 30, confidence_score * 3, 20, fillColor=conf_color, strokeColor=None))
+        # Label
+        conf_drawing.add(String(150, 10, f"Confidence: {confidence_score}% - {confidence_level}",
+                               fontSize=12, fillColor=colors.black, textAnchor='middle'))
+
+        elements.append(risk_drawing)
+        elements.append(Spacer(1, 0.1*inch))
+        elements.append(conf_drawing)
+        elements.append(Spacer(1, 0.2*inch))
+
+        # Assessment Table
         assessment_data = [
             ['Metric', 'Value'],
             ['Risk Score', f"{risk_score}/100"],
@@ -521,11 +552,38 @@ def export_pdf(ip: str):
         sources = data_dict.get('sources', [])
 
         intel_text = f"""
-        <b>Data Sources:</b> {', '.join(sources) if sources else 'None'}<br/>
         <b>Categories:</b> {', '.join(categories[:10]) if categories else 'None'}<br/>
         <b>Threat Types:</b> {', '.join(threat_types[:10]) if threat_types else 'None'}
         """
         elements.append(Paragraph(intel_text, styles['Normal']))
+        elements.append(Spacer(1, 0.15*inch))
+
+        # API Source Health Visual
+        elements.append(Paragraph("<b>API Source Health:</b>", styles['Normal']))
+        elements.append(Spacer(1, 0.05*inch))
+
+        source_drawing = Drawing(400, 40)
+        all_sources = ['AbuseIPDB', 'AlienVault OTX', 'VirusTotal', 'GreyNoise']
+        x_pos = 0
+        for i, api in enumerate(all_sources):
+            source_active = api in sources
+            # Draw box
+            box_color = colors.green if source_active else colors.lightgrey
+            source_drawing.add(Rect(x_pos, 15, 90, 20, fillColor=box_color, strokeColor=colors.black))
+            # Add checkmark or X
+            symbol = '✓' if source_active else '✗'
+            symbol_color = colors.green if source_active else colors.red
+            source_drawing.add(String(x_pos + 45, 23, symbol, fontSize=14, fillColor=symbol_color, textAnchor='middle', fontName='Helvetica-Bold'))
+            # Add label
+            source_drawing.add(String(x_pos + 45, 5, api[:10], fontSize=7, fillColor=colors.black, textAnchor='middle'))
+            x_pos += 100
+
+        # Add coverage summary
+        coverage_text = f"{len(sources)}/4 sources"
+        coverage_color = colors.green if len(sources) == 4 else colors.orange if len(sources) >= 3 else colors.red
+        source_drawing.add(String(200, 40, coverage_text, fontSize=10, fillColor=coverage_color, textAnchor='middle', fontName='Helvetica-Bold'))
+
+        elements.append(source_drawing)
         elements.append(Spacer(1, 0.2*inch))
 
         # MITRE ATT&CK Section
@@ -569,6 +627,28 @@ def export_pdf(ip: str):
         # Kill Chain Section
         kill_chain_stages = data_dict.get('kill_chain_stages', [])
         elements.append(Paragraph("CYBER KILL CHAIN ANALYSIS", heading_style))
+
+        # Kill Chain Progress Visual
+        kc_drawing = Drawing(400, 60)
+        stages_detected = len(kill_chain_stages)
+        total_stages = 7
+
+        # Progress bar background
+        kc_drawing.add(Rect(0, 30, 300, 20, fillColor=colors.lightgrey, strokeColor=colors.black))
+
+        # Progress bar fill (orange gradient)
+        progress_width = (stages_detected / total_stages) * 300
+        kc_bar_color = colors.HexColor('#ff6600') if stages_detected > 0 else colors.lightgrey
+        kc_drawing.add(Rect(0, 30, progress_width, 20, fillColor=kc_bar_color, strokeColor=None))
+
+        # Label
+        kc_label = f"{stages_detected}/{total_stages} Stages Detected"
+        label_color = colors.HexColor('#ff6600') if stages_detected > 0 else colors.grey
+        kc_drawing.add(String(150, 10, kc_label,
+                              fontSize=12, fillColor=label_color, textAnchor='middle', fontName='Helvetica-Bold'))
+
+        elements.append(kc_drawing)
+        elements.append(Spacer(1, 0.15*inch))
 
         all_stages = [
             '1. Reconnaissance',
