@@ -100,11 +100,13 @@ class AbuseIPDBNormalizer:
             'usage_type': data.get('usageType'),  # NEW: Data Center, ISP, etc.
             'total_reports': data.get('totalReports', 0),
             'last_reported': data.get('lastReportedAt'),
-            'num_distinct_reporters': data.get('numDistinctUsers', 0),  # NEW: Unique reporters
+            # NEW: Unique reporters
+            'num_distinct_reporters': data.get('numDistinctUsers', 0),
             'categories': AbuseIPDBNormalizer._extract_categories(data),
             'threat_types': ['abuse'] if data.get('totalReports', 0) > 0 else [],
             'sources': ['AbuseIPDB'],
-            'is_vpn': 'VPN' in data.get('usageType', '').upper() if data.get('usageType') else False,  # NEW: VPN detection
+            # NEW: VPN detection
+            'is_vpn': 'VPN' in data.get('usageType', '').upper() if data.get('usageType') else False,
             'raw_data': {
                 'abuseipdb': data
             }
@@ -413,7 +415,8 @@ class VirusTotalNormalizer:
         }
 
         # Extract ASN
-        asn_str = str(attributes.get('asn', '')) if attributes.get('asn') else None
+        asn_str = str(attributes.get('asn', '')
+                      ) if attributes.get('asn') else None
 
         normalized = {
             'ip_address': data.get('id'),
@@ -579,7 +582,8 @@ class GreyNoiseNormalizer:
             response)
 
         # Extract tags from metadata
-        metadata = response.get('metadata', {}) if isinstance(response.get('metadata'), dict) else {}
+        metadata = response.get('metadata', {}) if isinstance(
+            response.get('metadata'), dict) else {}
         tags = response.get('tags', []) or metadata.get('tags', [])
 
         normalized = {
@@ -595,15 +599,20 @@ class GreyNoiseNormalizer:
             'first_seen': response.get('first_seen'),  # NEW: First seen
             'last_seen': response.get('last_seen'),  # NEW: Last seen
             'threat_actor': response.get('actor'),  # NEW: Known threat actor
-            'tags': tags if isinstance(tags, list) else [],  # NEW: GreyNoise tags
+            # NEW: GreyNoise tags
+            'tags': tags if isinstance(tags, list) else [],
             'categories': categories,
             'threat_types': threat_types,
             'sources': ['GreyNoise'],
             # Privacy/Anonymization detection
-            'is_tor': metadata.get('tor', False) if metadata else False,  # NEW: Tor detection
-            'is_vpn': 'vpn' in response.get('name', '').lower() if response.get('name') else False,  # NEW: VPN detection
-            'is_proxy': 'proxy' in response.get('name', '').lower() if response.get('name') else False,  # NEW: Proxy detection
-            'is_bot': metadata.get('bot', False) if metadata else False,  # NEW: Bot detection
+            # NEW: Tor detection
+            'is_tor': metadata.get('tor', False) if metadata else False,
+            # NEW: VPN detection
+            'is_vpn': 'vpn' in response.get('name', '').lower() if response.get('name') else False,
+            # NEW: Proxy detection
+            'is_proxy': 'proxy' in response.get('name', '').lower() if response.get('name') else False,
+            # NEW: Bot detection
+            'is_bot': metadata.get('bot', False) if metadata else False,
             'raw_data': {
                 'greynoise': response
             },
@@ -1056,11 +1065,32 @@ class ThreatIntelAggregator:
             country_code=aggregated.get('country_code'),
             isp=aggregated.get('isp'),
             domain=aggregated.get('domain'),
+            # Enhanced Network Context
+            usage_type=aggregated.get('usage_type'),
+            asn=aggregated.get('asn'),
+            asn_name=aggregated.get('asn_name'),
+            # Intelligence Metrics
             total_reports=aggregated['total_reports'],
             last_reported=aggregated.get('last_reported'),
+            num_distinct_reporters=aggregated.get('num_distinct_reporters', 0),
             categories=aggregated['categories'],
             threat_types=aggregated['threat_types'],
             sources=aggregated['sources'],
+            # Temporal Intelligence
+            first_seen=aggregated.get('first_seen'),
+            last_seen=aggregated.get('last_seen'),
+            # Attribution & Malware
+            malware_families=aggregated.get('malware_families', []),
+            threat_actor=aggregated.get('threat_actor'),
+            # Community Intelligence
+            community_votes=aggregated.get('community_votes', {}),
+            tags=aggregated.get('tags', []),
+            # Privacy/Anonymization Services
+            is_vpn=aggregated.get('is_vpn', False),
+            is_tor=aggregated.get('is_tor', False),
+            is_proxy=aggregated.get('is_proxy', False),
+            is_bot=aggregated.get('is_bot', False),
+            # Recommendation & Raw Data
             recommendation=recommendation,
             raw_data=aggregated['raw_data']
         )
@@ -1095,17 +1125,43 @@ class ThreatIntelAggregator:
         merged['sources'] = list(
             set(base.get('sources', []) + new.get('sources', [])))
 
+        # Merge new enhanced list fields
+        merged['malware_families'] = list(
+            set(base.get('malware_families', []) + new.get('malware_families', [])))
+        merged['tags'] = list(
+            set(base.get('tags', []) + new.get('tags', [])))
+
         # Sum total reports
         merged['total_reports'] = base.get(
             'total_reports', 0) + new.get('total_reports', 0)
+
+        # Sum distinct reporters
+        merged['num_distinct_reporters'] = max(
+            base.get('num_distinct_reporters', 0),
+            new.get('num_distinct_reporters', 0))
 
         # Merge raw data
         merged['raw_data'].update(new.get('raw_data', {}))
 
         # Use non-null values from new response for other fields
-        for key in ['country', 'country_code', 'isp', 'domain']:
+        for key in ['country', 'country_code', 'isp', 'domain',
+                    'usage_type', 'asn', 'asn_name', 'first_seen', 'last_seen',
+                    'threat_actor', 'last_reported']:
             if not merged.get(key) and new.get(key):
                 merged[key] = new[key]
+
+        # Merge boolean flags (OR logic - if any source detects it)
+        for key in ['is_vpn', 'is_tor', 'is_proxy', 'is_bot']:
+            merged[key] = base.get(key, False) or new.get(key, False)
+
+        # Merge community votes (sum the votes)
+        base_votes = base.get('community_votes', {})
+        new_votes = new.get('community_votes', {})
+        if base_votes or new_votes:
+            merged['community_votes'] = {
+                'harmless': base_votes.get('harmless', 0) + new_votes.get('harmless', 0),
+                'malicious': base_votes.get('malicious', 0) + new_votes.get('malicious', 0)
+            }
 
         return merged
 
