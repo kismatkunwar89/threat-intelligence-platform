@@ -48,13 +48,35 @@ class ThreatIntelResult:
     # Network Context
     isp: Optional[str] = None
     domain: Optional[str] = None
+    usage_type: Optional[str] = None  # Data Center, ISP, Residential, etc. (AbuseIPDB)
+    asn: Optional[str] = None  # Autonomous System Number
+    asn_name: Optional[str] = None  # ASN owner name
 
     # Intelligence Metrics
     total_reports: int = 0
     last_reported: Optional[str] = None
+    num_distinct_reporters: int = 0  # Number of unique reporters (AbuseIPDB)
     categories: List[str] = field(default_factory=list)
     threat_types: List[str] = field(default_factory=list)
     sources: List[str] = field(default_factory=list)
+
+    # Temporal Intelligence
+    first_seen: Optional[str] = None  # First observed (OTX/GreyNoise)
+    last_seen: Optional[str] = None  # Last observed (OTX/GreyNoise)
+
+    # Attribution & Malware
+    malware_families: List[str] = field(default_factory=list)  # Associated malware (OTX)
+    threat_actor: Optional[str] = None  # Known threat actor (GreyNoise)
+
+    # Community Intelligence
+    community_votes: Dict[str, int] = field(default_factory=dict)  # VirusTotal votes
+    tags: List[str] = field(default_factory=list)  # Community tags (OTX/GreyNoise)
+
+    # Privacy/Anonymization Services
+    is_vpn: bool = False  # VPN detection (GreyNoise)
+    is_tor: bool = False  # Tor exit node (GreyNoise)
+    is_proxy: bool = False  # Proxy detection (GreyNoise)
+    is_bot: bool = False  # Bot detection (GreyNoise)
 
     # CTIA Framework (Certified Threat Intelligence Analyst)
     # To be implemented in Session 2

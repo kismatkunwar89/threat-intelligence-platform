@@ -97,11 +97,14 @@ class AbuseIPDBNormalizer:
             'country_code': data.get('countryCode'),
             'isp': data.get('isp'),
             'domain': data.get('domain'),
+            'usage_type': data.get('usageType'),  # NEW: Data Center, ISP, etc.
             'total_reports': data.get('totalReports', 0),
             'last_reported': data.get('lastReportedAt'),
+            'num_distinct_reporters': data.get('numDistinctUsers', 0),  # NEW: Unique reporters
             'categories': AbuseIPDBNormalizer._extract_categories(data),
             'threat_types': ['abuse'] if data.get('totalReports', 0) > 0 else [],
             'sources': ['AbuseIPDB'],
+            'is_vpn': 'VPN' in data.get('usageType', '').upper() if data.get('usageType') else False,  # NEW: VPN detection
             'raw_data': {
                 'abuseipdb': data
             }
@@ -210,6 +213,11 @@ class OTXNormalizer:
         isp = general.get('asn', '').split(
             ' ', 1)[-1] if general.get('asn') else None
 
+        # Extract additional intelligence
+        malware_families = OTXNormalizer._extract_malware_families(general)
+        tags = OTXNormalizer._extract_threat_types(general)
+        asn_info = OTXNormalizer._extract_asn(general)
+
         normalized = {
             'ip_address': response.get('ip_address'),
             'risk_score': risk_score,
@@ -218,10 +226,14 @@ class OTXNormalizer:
             'country_code': country_code,
             'isp': isp,
             'domain': None,  # OTX doesn't provide this directly
+            'asn': asn_info.get('asn'),  # NEW: ASN number
+            'asn_name': asn_info.get('asn_name'),  # NEW: ASN owner
             'total_reports': response.get('pulse_count', 0),
             'last_reported': None,
-            'categories': OTXNormalizer._extract_threat_types(general),
-            'threat_types': OTXNormalizer._extract_threat_types(general),
+            'categories': tags,
+            'threat_types': tags,
+            'malware_families': malware_families,  # NEW: Associated malware
+            'tags': tags,  # NEW: Community tags
             'sources': ['AlienVault OTX'],
             'raw_data': {
                 'otx': response
@@ -284,6 +296,58 @@ class OTXNormalizer:
 
         return sorted(list(threat_tags))
 
+    @staticmethod
+    def _extract_malware_families(general: Dict[str, Any]) -> List[str]:
+        """
+        Extract malware family names from OTX pulse data.
+
+        Args:
+            general: OTX general data
+
+        Returns:
+            list: Unique malware family names
+        """
+        pulse_info = general.get('pulse_info', {})
+        pulses = pulse_info.get('pulses', [])
+
+        if not pulses:
+            return []
+
+        malware_families = set()
+        for pulse in pulses:
+            # Check malware_families field
+            families = pulse.get('malware_families', [])
+            if families:
+                for family in families:
+                    if isinstance(family, dict):
+                        malware_families.add(family.get('display_name', ''))
+                    else:
+                        malware_families.add(str(family))
+
+        return sorted([f for f in malware_families if f])
+
+    @staticmethod
+    def _extract_asn(general: Dict[str, Any]) -> Dict[str, Optional[str]]:
+        """
+        Extract ASN information from OTX data.
+
+        Args:
+            general: OTX general data
+
+        Returns:
+            dict: ASN number and name
+        """
+        asn_string = general.get('asn', '')
+        if not asn_string:
+            return {'asn': None, 'asn_name': None}
+
+        # ASN format: "AS15169 Google LLC"
+        parts = asn_string.split(' ', 1)
+        return {
+            'asn': parts[0] if parts else None,
+            'asn_name': parts[1] if len(parts) > 1 else None
+        }
+
 
 class VirusTotalNormalizer:
     """
@@ -341,6 +405,16 @@ class VirusTotalNormalizer:
         # Extract categories from analysis results
         categories = VirusTotalNormalizer._extract_categories(attributes)
 
+        # Extract community votes
+        votes = attributes.get('total_votes', {})
+        community_votes = {
+            'harmless': votes.get('harmless', 0),
+            'malicious': votes.get('malicious', 0)
+        }
+
+        # Extract ASN
+        asn_str = str(attributes.get('asn', '')) if attributes.get('asn') else None
+
         normalized = {
             'ip_address': data.get('id'),
             'risk_score': risk_score,
@@ -349,8 +423,11 @@ class VirusTotalNormalizer:
             'country_code': attributes.get('country'),
             'isp': attributes.get('as_owner'),
             'domain': None,
+            'asn': f"AS{asn_str}" if asn_str else None,  # NEW: ASN
+            'asn_name': attributes.get('as_owner'),  # NEW: ASN owner
             'total_reports': malicious_count + suspicious_count,
             'last_reported': attributes.get('last_modification_date'),
+            'community_votes': community_votes,  # NEW: Community votes
             'categories': categories,
             'threat_types': VirusTotalNormalizer._extract_threat_types(attributes),
             'sources': ['VirusTotal'],
@@ -501,6 +578,10 @@ class GreyNoiseNormalizer:
         categories, threat_types = GreyNoiseNormalizer._extract_classifications(
             response)
 
+        # Extract tags from metadata
+        metadata = response.get('metadata', {}) if isinstance(response.get('metadata'), dict) else {}
+        tags = response.get('tags', []) or metadata.get('tags', [])
+
         normalized = {
             'ip_address': ip_address,
             'risk_score': risk_score,
@@ -511,9 +592,18 @@ class GreyNoiseNormalizer:
             'domain': None,
             'total_reports': 1 if is_noise else 0,
             'last_reported': response.get('last_seen'),
+            'first_seen': response.get('first_seen'),  # NEW: First seen
+            'last_seen': response.get('last_seen'),  # NEW: Last seen
+            'threat_actor': response.get('actor'),  # NEW: Known threat actor
+            'tags': tags if isinstance(tags, list) else [],  # NEW: GreyNoise tags
             'categories': categories,
             'threat_types': threat_types,
             'sources': ['GreyNoise'],
+            # Privacy/Anonymization detection
+            'is_tor': metadata.get('tor', False) if metadata else False,  # NEW: Tor detection
+            'is_vpn': 'vpn' in response.get('name', '').lower() if response.get('name') else False,  # NEW: VPN detection
+            'is_proxy': 'proxy' in response.get('name', '').lower() if response.get('name') else False,  # NEW: Proxy detection
+            'is_bot': metadata.get('bot', False) if metadata else False,  # NEW: Bot detection
             'raw_data': {
                 'greynoise': response
             },
