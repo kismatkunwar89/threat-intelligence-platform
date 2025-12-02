@@ -17,6 +17,14 @@
     - Confidence scoring algorithm
     - VirusTotal rate limiting (4/min, 500/day)
     - GreyNoise RIOT detection
+    - Enhanced intelligence fields:
+      * Network Profile: Usage Type, ASN, Unique Reporters
+      * Temporal Analysis: First/Last Seen timestamps
+      * Malware Attribution: Malware families, Threat actors
+      * Privacy Detection: TOR, VPN, Proxy, Bot identification
+      * Community Intelligence: VirusTotal votes, Community tags
+    - Visual enhancements in PDF and Web UI
+    - Real-time progress indicator during analysis
 
 🧪 TEST RESULTS:
   ✓ Component Tests: 5/5 PASSED
