@@ -254,6 +254,237 @@
         </div>
     </div>
 
+    <!-- Network Profile Card -->
+    {% if threat_data.usage_type or threat_data.asn or threat_data.asn_name %}
+    <div class="card">
+        <h2>🌐 Network Profile</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Infrastructure classification and ownership details</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+            {% if threat_data.usage_type %}
+            <div style="background: rgba(0, 255, 255, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-cyan);">
+                <p style="color: var(--text-secondary); margin-bottom: 5px;">Usage Type</p>
+                <p style="color: var(--text-primary); font-size: 1.1em; font-weight: bold;">
+                    {% if 'Data Center' in threat_data.usage_type %}
+                        🖥️ {{ threat_data.usage_type }}
+                    {% elif 'ISP' in threat_data.usage_type %}
+                        🌐 {{ threat_data.usage_type }}
+                    {% elif 'Residential' in threat_data.usage_type %}
+                        🏠 {{ threat_data.usage_type }}
+                    {% else %}
+                        {{ threat_data.usage_type }}
+                    {% endif %}
+                </p>
+                <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">
+                    {% if 'Data Center' in threat_data.usage_type %}
+                        Higher risk - Often used for attacks
+                    {% elif 'Residential' in threat_data.usage_type %}
+                        Lower risk - Typical home user
+                    {% else %}
+                        Classification from AbuseIPDB
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+
+            {% if threat_data.asn %}
+            <div style="background: rgba(0, 255, 255, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-cyan);">
+                <p style="color: var(--text-secondary); margin-bottom: 5px;">Autonomous System</p>
+                <p style="color: var(--text-primary); font-size: 1.1em; font-weight: bold;">{{ threat_data.asn }}</p>
+                {% if threat_data.asn_name %}
+                <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 5px;">{{ threat_data.asn_name }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if threat_data.num_distinct_reporters > 0 %}
+            <div style="background: rgba(255, 165, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning-orange);">
+                <p style="color: var(--text-secondary); margin-bottom: 5px;">Unique Reporters</p>
+                <p style="color: var(--text-primary); font-size: 1.1em; font-weight: bold;">{{ threat_data.num_distinct_reporters }}</p>
+                <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">
+                    {% if threat_data.num_distinct_reporters > 10 %}
+                        High diversity - Multiple sources
+                    {% elif threat_data.num_distinct_reporters > 3 %}
+                        Moderate reporting diversity
+                    {% else %}
+                        Limited reporting sources
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Temporal Analysis Card -->
+    {% if threat_data.first_seen or threat_data.last_seen %}
+    <div class="card">
+        <h2>⏰ Temporal Intelligence</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Activity timeline and threat evolution</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            {% if threat_data.first_seen %}
+            <div style="background: rgba(0, 255, 255, 0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                <p style="color: var(--text-secondary); margin-bottom: 5px;">🕐 First Observed</p>
+                <p style="color: var(--accent-cyan); font-size: 1.1em; font-weight: bold;">{{ threat_data.first_seen }}</p>
+            </div>
+            {% endif %}
+
+            {% if threat_data.last_seen %}
+            <div style="background: rgba(255, 165, 0, 0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                <p style="color: var(--text-secondary); margin-bottom: 5px;">🕐 Last Observed</p>
+                <p style="color: var(--warning-orange); font-size: 1.1em; font-weight: bold;">{{ threat_data.last_seen }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if threat_data.first_seen and threat_data.last_seen %}
+        <div style="margin-top: 15px; padding: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 5px; text-align: center;">
+            <p style="color: var(--text-secondary); font-size: 0.9em;">
+                📊 Activity period tracked from first to most recent observation
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Malware & Attribution Card -->
+    {% if threat_data.malware_families or threat_data.threat_actor %}
+    <div class="card">
+        <h2>🦠 Malware & Attribution</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Associated malware families and threat actors</p>
+
+        {% if threat_data.malware_families and threat_data.malware_families | length > 0 %}
+        <div style="margin-bottom: 20px;">
+            <div style="background: rgba(255, 0, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid var(--danger-red);">
+                <p style="color: var(--danger-red); font-weight: bold; margin-bottom: 10px;">
+                    ⚠️ {{ threat_data.malware_families | length }} Malware Famil{{ 'y' if threat_data.malware_families | length == 1 else 'ies' }} Detected
+                </p>
+                <div class="tags">
+                    {% for malware in threat_data.malware_families %}
+                    <span class="tag" style="background: rgba(255, 0, 0, 0.2); border-color: var(--danger-red);">🦠 {{ malware }}</span>
+                    {% endfor %}
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 10px;">
+                    This IP has been associated with known malware campaigns
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if threat_data.threat_actor %}
+        <div style="background: rgba(255, 165, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning-orange);">
+            <p style="color: var(--text-secondary); margin-bottom: 5px;">Known Threat Actor</p>
+            <p style="color: var(--warning-orange); font-size: 1.2em; font-weight: bold;">👤 {{ threat_data.threat_actor }}</p>
+            <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">
+                Attribution data from GreyNoise intelligence
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Privacy Services Detection Card -->
+    {% if threat_data.is_vpn or threat_data.is_tor or threat_data.is_proxy or threat_data.is_bot %}
+    <div class="card">
+        <h2>🔒 Privacy & Anonymization Services</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Detection of privacy tools and proxy services</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+            {% if threat_data.is_tor %}
+            <div style="background: rgba(255, 0, 0, 0.2); padding: 15px; border-radius: 8px; border: 2px solid var(--danger-red); text-align: center;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🧅</div>
+                <p style="color: var(--danger-red); font-weight: bold;">TOR Exit Node</p>
+                <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">High anonymity network</p>
+            </div>
+            {% endif %}
+
+            {% if threat_data.is_vpn %}
+            <div style="background: rgba(255, 165, 0, 0.2); padding: 15px; border-radius: 8px; border: 2px solid var(--warning-orange); text-align: center;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🔐</div>
+                <p style="color: var(--warning-orange); font-weight: bold;">VPN Detected</p>
+                <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">Virtual private network</p>
+            </div>
+            {% endif %}
+
+            {% if threat_data.is_proxy %}
+            <div style="background: rgba(255, 165, 0, 0.2); padding: 15px; border-radius: 8px; border: 2px solid var(--warning-orange); text-align: center;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🔀</div>
+                <p style="color: var(--warning-orange); font-weight: bold;">Proxy Service</p>
+                <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">Traffic relay detected</p>
+            </div>
+            {% endif %}
+
+            {% if threat_data.is_bot %}
+            <div style="background: rgba(0, 255, 255, 0.2); padding: 15px; border-radius: 8px; border: 2px solid var(--accent-cyan); text-align: center;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🤖</div>
+                <p style="color: var(--accent-cyan); font-weight: bold;">Bot Activity</p>
+                <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">Automated traffic</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="margin-top: 15px; padding: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 5px;">
+            <p style="color: var(--text-secondary); font-size: 0.9em; text-align: center;">
+                ⚠️ Privacy services can indicate legitimate privacy-conscious users or attempts to hide malicious activity
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Community Intelligence Card -->
+    {% if (threat_data.community_votes and (threat_data.community_votes.harmless > 0 or threat_data.community_votes.malicious > 0)) or (threat_data.tags and threat_data.tags | length > 0) %}
+    <div class="card">
+        <h2>👥 Community Intelligence</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Validation and insights from security community</p>
+
+        {% if threat_data.community_votes and (threat_data.community_votes.harmless > 0 or threat_data.community_votes.malicious > 0) %}
+        <div style="margin-bottom: 20px;">
+            <p style="color: var(--text-secondary); margin-bottom: 10px;">VirusTotal Community Votes</p>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div style="flex: 1; background: rgba(0, 255, 0, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid var(--safe-green); text-align: center;">
+                    <p style="color: var(--text-secondary); font-size: 0.85em;">Harmless</p>
+                    <p style="color: var(--safe-green); font-size: 1.3em; font-weight: bold;">👍 {{ threat_data.community_votes.harmless }}</p>
+                </div>
+                <div style="flex: 1; background: rgba(255, 0, 0, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid var(--danger-red); text-align: center;">
+                    <p style="color: var(--text-secondary); font-size: 0.85em;">Malicious</p>
+                    <p style="color: var(--danger-red); font-size: 1.3em; font-weight: bold;">👎 {{ threat_data.community_votes.malicious }}</p>
+                </div>
+            </div>
+            {% set total_votes = threat_data.community_votes.harmless + threat_data.community_votes.malicious %}
+            {% if total_votes > 0 %}
+            <div style="margin-top: 10px; text-align: center;">
+                <p style="color: var(--text-secondary); font-size: 0.9em;">
+                    Total: {{ total_votes }} vote{{ 's' if total_votes != 1 else '' }}
+                    {% if threat_data.community_votes.malicious > threat_data.community_votes.harmless %}
+                        <span style="color: var(--danger-red);">• Community flags as malicious</span>
+                    {% elif threat_data.community_votes.harmless > threat_data.community_votes.malicious %}
+                        <span style="color: var(--safe-green);">• Community validates as harmless</span>
+                    {% else %}
+                        <span style="color: var(--warning-orange);">• Mixed community opinion</span>
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if threat_data.tags and threat_data.tags | length > 0 %}
+        <div>
+            <p style="color: var(--text-secondary); margin-bottom: 10px;">Community Tags</p>
+            <div class="tags">
+                {% for tag in threat_data.tags %}
+                <span class="tag" style="background: rgba(0, 255, 255, 0.2); border-color: var(--accent-cyan);">🏷️ {{ tag }}</span>
+                {% endfor %}
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 10px;">
+                Tags from OTX and GreyNoise communities
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Threat Categories -->
     {% if threat_data.categories or threat_data.threat_types %}
     <div class="card">

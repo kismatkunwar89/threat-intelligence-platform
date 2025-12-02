@@ -705,6 +705,159 @@ def export_pdf(ip: str):
         ))
         elements.append(Spacer(1, 0.2*inch))
 
+        # Network Profile Section
+        usage_type = data_dict.get('usage_type')
+        asn = data_dict.get('asn')
+        asn_name = data_dict.get('asn_name')
+        num_distinct_reporters = data_dict.get('num_distinct_reporters', 0)
+
+        if usage_type or asn or num_distinct_reporters > 0:
+            elements.append(Paragraph("NETWORK PROFILE", heading_style))
+
+            network_data = [['Field', 'Value']]
+            if usage_type:
+                network_data.append(['Usage Type', usage_type])
+            if asn:
+                asn_display = f"{asn} - {asn_name}" if asn_name else asn
+                network_data.append(['Autonomous System', asn_display])
+            if num_distinct_reporters > 0:
+                network_data.append(['Unique Reporters', str(num_distinct_reporters)])
+
+            network_table = Table(network_data, colWidths=[2*inch, 4*inch])
+            network_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#00bcd4')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            elements.append(network_table)
+            elements.append(Spacer(1, 0.2*inch))
+
+        # Temporal Intelligence Section
+        first_seen = data_dict.get('first_seen')
+        last_seen = data_dict.get('last_seen')
+
+        if first_seen or last_seen:
+            elements.append(Paragraph("TEMPORAL INTELLIGENCE", heading_style))
+
+            temporal_data = [['Observation', 'Timestamp']]
+            if first_seen:
+                temporal_data.append(['First Observed', first_seen])
+            if last_seen:
+                temporal_data.append(['Last Observed', last_seen])
+
+            temporal_table = Table(temporal_data, colWidths=[2*inch, 4*inch])
+            temporal_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#00bcd4')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            elements.append(temporal_table)
+            elements.append(Spacer(1, 0.2*inch))
+
+        # Malware & Attribution Section
+        malware_families = data_dict.get('malware_families', [])
+        threat_actor = data_dict.get('threat_actor')
+
+        if malware_families or threat_actor:
+            elements.append(Paragraph("MALWARE & ATTRIBUTION", heading_style))
+
+            attribution_data = [['Field', 'Value']]
+            if malware_families and len(malware_families) > 0:
+                malware_list = ', '.join(malware_families)
+                attribution_data.append(['Malware Families', malware_list])
+            if threat_actor:
+                attribution_data.append(['Threat Actor', threat_actor])
+
+            attribution_table = Table(attribution_data, colWidths=[2*inch, 4*inch])
+            attribution_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f44336')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#ffebee')),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            elements.append(attribution_table)
+            elements.append(Spacer(1, 0.2*inch))
+
+        # Privacy Services Detection Section
+        is_tor = data_dict.get('is_tor', False)
+        is_vpn = data_dict.get('is_vpn', False)
+        is_proxy = data_dict.get('is_proxy', False)
+        is_bot = data_dict.get('is_bot', False)
+
+        if is_tor or is_vpn or is_proxy or is_bot:
+            elements.append(Paragraph("PRIVACY & ANONYMIZATION SERVICES", heading_style))
+
+            privacy_data = [['Service', 'Status']]
+            if is_tor:
+                privacy_data.append(['TOR Exit Node', 'DETECTED'])
+            if is_vpn:
+                privacy_data.append(['VPN Service', 'DETECTED'])
+            if is_proxy:
+                privacy_data.append(['Proxy Service', 'DETECTED'])
+            if is_bot:
+                privacy_data.append(['Bot Activity', 'DETECTED'])
+
+            privacy_table = Table(privacy_data, colWidths=[3*inch, 3*inch])
+            privacy_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#ff9800')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#fff3e0')),
+                ('TEXTCOLOR', (1, 1), (1, -1), colors.HexColor('#e65100')),
+                ('FONTNAME', (1, 1), (1, -1), 'Helvetica-Bold'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            elements.append(privacy_table)
+            elements.append(Spacer(1, 0.2*inch))
+
+        # Community Intelligence Section
+        community_votes = data_dict.get('community_votes', {})
+        tags = data_dict.get('tags', [])
+
+        if (community_votes and (community_votes.get('harmless', 0) > 0 or community_votes.get('malicious', 0) > 0)) or (tags and len(tags) > 0):
+            elements.append(Paragraph("COMMUNITY INTELLIGENCE", heading_style))
+
+            community_data = [['Source', 'Information']]
+
+            if community_votes and (community_votes.get('harmless', 0) > 0 or community_votes.get('malicious', 0) > 0):
+                harmless = community_votes.get('harmless', 0)
+                malicious = community_votes.get('malicious', 0)
+                total_votes = harmless + malicious
+                votes_summary = f"Harmless: {harmless} | Malicious: {malicious} | Total: {total_votes}"
+                community_data.append(['VirusTotal Votes', votes_summary])
+
+            if tags and len(tags) > 0:
+                tags_display = ', '.join(tags[:10])  # Limit to 10 tags for PDF
+                if len(tags) > 10:
+                    tags_display += f' (+{len(tags) - 10} more)'
+                community_data.append(['Community Tags', tags_display])
+
+            community_table = Table(community_data, colWidths=[2*inch, 4*inch])
+            community_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#00bcd4')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            elements.append(community_table)
+            elements.append(Spacer(1, 0.2*inch))
+
         # Recommendation Section
         recommendation = data_dict.get('recommendation', {})
         if recommendation:
