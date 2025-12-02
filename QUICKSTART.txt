@@ -2,19 +2,21 @@
 ║          THREAT INTEL LOOKUP APP - QUICK START GUIDE              ║
 ╚═══════════════════════════════════════════════════════════════════╝
 
-📋 PROJECT STATUS: ✅ ALL 10 TASKS COMPLETE
+📋 PROJECT STATUS: ✅ SESSION 2 COMPLETE (Enhanced Intelligence)
 
-🎯 COMPLETED TASKS:
-  ✓ Task 1.0: Configuration management
-  ✓ Task 2.0: Flask application structure
-  ✓ Task 3.0: Database layer with MySQL
-  ✓ Task 4.0: IP validation utilities
-  ✓ Task 5.0: API integration (AbuseIPDB + OTX)
-  ✓ Task 6.0: Data normalization
-  ✓ Task 7.0: Caching mechanism
-  ✓ Task 8.0: Flask routes
-  ✓ Task 9.0: Dark-themed UI
-  ✓ Task 10.0: Error handling
+🎯 IMPLEMENTED FEATURES:
+  ✓ Session 1: Export Foundation
+    - Canonical schema (ThreatIntelResult dataclass)
+    - Recommendation engine (BLOCK/MONITOR/INVESTIGATE/ALLOW)
+    - 3 export formats (JSON, CSV, PDF)
+
+  ✓ Session 2: Enhanced Intelligence
+    - 4 API sources (AbuseIPDB, OTX, VirusTotal, GreyNoise)
+    - MITRE ATT&CK mapping (691 techniques via library)
+    - Cyber Kill Chain mapping (7 stages)
+    - Confidence scoring algorithm
+    - VirusTotal rate limiting (4/min, 500/day)
+    - GreyNoise RIOT detection
 
 🧪 TEST RESULTS:
   ✓ Component Tests: 5/5 PASSED
@@ -25,13 +27,20 @@
 
 🚀 RUNNING THE APPLICATION
 
-1. Activate virtual environment:
+1. Download MITRE ATT&CK data (ONE-TIME SETUP):
+   $ source venv/bin/activate
+   $ python3 scripts/download_mitre_data.py
+
+   This downloads ~43MB of MITRE ATT&CK Enterprise data for offline use.
+   Update every 6-12 months to get latest techniques.
+
+2. Activate virtual environment:
    $ source venv/bin/activate
 
-2. Start the Flask application:
+3. Start the Flask application:
    $ python3 app.py
 
-3. Access the application:
+4. Access the application:
    🌐 Local:   http://127.0.0.1:5000
    🌐 Network: http://10.0.0.65:5000
 
@@ -95,9 +104,13 @@ Required environment variables in .env:
   DB_PASSWORD=root
   DB_NAME=threat_intel_db
 
-  # API Keys
+  # API Keys (Required)
   ABUSEIPDB_API_KEY=your_abuseipdb_key
   OTX_API_KEY=your_otx_key
+
+  # API Keys (Optional - Session 2)
+  VIRUSTOTAL_API_KEY=your_virustotal_key  # Free: 4/min, 500/day
+  GREYNOISE_API_KEY=your_greynoise_key    # Falls back to Community API
 
   # Settings
   CACHE_TTL_SECONDS=3600
@@ -124,19 +137,31 @@ Required environment variables in .env:
 
 ═══════════════════════════════════════════════════════════════════
 
-📊 API SOURCES
+📊 API SOURCES (4 Integrated)
 
-  AbuseIPDB:
-  • Abuse confidence score
-  • Total reports
-  • Country/ISP information
-  • Free tier: 1,000 requests/day
+  1. AbuseIPDB:
+     • Abuse confidence score (0-100)
+     • Total reports & categories
+     • Country/ISP information
+     • Free tier: 1,000 requests/day
 
-  AlienVault OTX:
-  • Pulse count
-  • Reputation score
-  • Malware associations
-  • Free tier: Unlimited
+  2. AlienVault OTX:
+     • Pulse count & reputation
+     • Malware associations
+     • Threat types
+     • Free tier: Unlimited
+
+  3. VirusTotal:
+     • Malicious detections
+     • File/URL associations
+     • Community votes
+     • Free tier: 4 requests/min, 500/day
+
+  4. GreyNoise:
+     • RIOT (benign service detection)
+     • Classification (malicious/benign/unknown)
+     • Scanner classification
+     • Community API: Free (limited data)
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -165,3 +190,32 @@ This project demonstrates:
 ═══════════════════════════════════════════════════════════════════
 
 ✅ PROJECT COMPLETE - READY FOR USE
+Let me give you some good test IPs that will demonstrate different risk levels: High Risk IPs (for testing BLOCK recommendations):
+185.220.101.1 - Known Tor exit node, should have high risk score
+45.148.10.124 - Often flagged for malicious activity
+Medium Risk IPs (for testing MONITOR recommendations):
+80.82.77.139 - Some reports but not critical
+194.38.20.66 - Moderate threat indicators
+Low Risk IPs (for testing INVESTIGATE/ALLOW recommendations):
+8.8.8.8 - Google DNS (should be clean)
+1.1.1.1 - Cloudflare DNS (should be clean)
+Recommended for testing: Try 185.220.101.1 first - based on your previous test, this gave:
+Risk Score: 97/100 (HIGH RISK)
+Recommendation: BLOCK (CRITICAL)
+Total Reports: 232
+Sources: AlienVault OTX + AbuseIPDB
+This will let you see the full export functionality with a high-risk IP that has rich data. You can access the app at http://localhost:5000 and test all three export formats (JSON, CSV, PDF).
+
+For this project, the static dictionary approach is appropriate because:
+
+Simplicity - No additional dependencies (attackcti, stix2)
+Performance - No API calls or file parsing at runtime
+Reliability - Works offline, no rate limits
+Scope - We're mapping IP threat categories (limited set), not full malware analysis
+When to upgrade to MITRE STIX:
+
+If you need malware family → technique mapping
+If you need technique descriptions, mitigations
+If you need to stay current with ATT&CK updates automatically
+For a production enterprise tool
+
