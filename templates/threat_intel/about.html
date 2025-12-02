@@ -1,0 +1,115 @@
+{% extends "threat_intel/base.html" %}
+
+{% block title %}About - Threat Intel Lookup{% endblock %}
+
+{% block content %}
+<div class="ui container" style="margin-top: 40px;">
+    <div class="ui segment threat-card">
+        <h1 style="text-align: center; color: var(--accent-cyan); margin-bottom: 30px;">
+            About Threat Intel Lookup
+        </h1>
+
+        <div class="ui divider"></div>
+
+        <h2 style="color: var(--accent-green);">Mission</h2>
+        <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 30px;">
+            Aggregate threat intelligence from multiple authoritative sources to provide
+            comprehensive IP reputation analysis for security professionals, researchers, and IT teams.
+        </p>
+
+        <h2 style="color: var(--accent-green);">Data Sources</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+            We query four leading threat intelligence platforms:
+        </p>
+
+        <div class="ui four stackable cards">
+            <div class="card">
+                <div class="content">
+                    <div class="header">AbuseIPDB</div>
+                    <div class="description">
+                        Community-driven IP abuse reporting and reputation database
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="content">
+                    <div class="header">AlienVault OTX</div>
+                    <div class="description">
+                        Open Threat Exchange with global threat intelligence
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="content">
+                    <div class="header">VirusTotal</div>
+                    <div class="description">
+                        Comprehensive malware and threat analysis platform
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="content">
+                    <div class="header">GreyNoise</div>
+                    <div class="description">
+                        Internet scanning and bot classification intelligence
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 style="color: var(--accent-green); margin-top: 30px;">Analysis Frameworks</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+            Our analysis leverages industry-standard frameworks:
+        </p>
+
+        <div class="ui list">
+            <div class="item">
+                <i class="shield icon" style="color: var(--accent-cyan);"></i>
+                <div class="content">
+                    <strong>MITRE ATT&CK</strong> - Maps observed behaviors to adversary tactics and techniques
+                </div>
+            </div>
+            <div class="item">
+                <i class="chain icon" style="color: var(--warning-orange);"></i>
+                <div class="content">
+                    <strong>Cyber Kill Chain</strong> - Identifies attack progression stages
+                </div>
+            </div>
+        </div>
+
+        <h2 style="color: var(--accent-green); margin-top: 30px;">Enhanced Intelligence</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+            Each IP lookup includes:
+        </p>
+
+        <div class="ui bulleted list" style="color: var(--text-secondary);">
+            <div class="item">Network Profile (Usage Type, ASN, Infrastructure Details)</div>
+            <div class="item">Temporal Intelligence (First/Last Seen Timestamps)</div>
+            <div class="item">Malware Attribution (Associated Families, Threat Actors)</div>
+            <div class="item">Privacy Detection (VPN, Tor, Proxy, Bot Identification)</div>
+            <div class="item">Community Validation (VirusTotal Votes, Tags)</div>
+            <div class="item">Risk Assessment with Confidence Scoring</div>
+            <div class="item">Actionable Recommendations</div>
+        </div>
+
+        <h2 style="color: var(--accent-green); margin-top: 30px;">Export Formats</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+            Results can be exported in multiple formats for integration:
+        </p>
+
+        <div class="ui labels">
+            <span class="ui label threat-tag">JSON</span>
+            <span class="ui label threat-tag">CSV</span>
+            <span class="ui label threat-tag">PDF Report</span>
+        </div>
+
+        <div class="ui divider" style="margin-top: 40px;"></div>
+
+        <div style="text-align: center;">
+            <a href="{{ url_for('threat_intel.index') }}" class="ui button cyber-btn large">
+                Start Analysis
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,29 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "threat_intel/base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Threat Intel Results - {{ ip_address }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/threat_intel.css') }}">
-</head>
+{% block title %}Results: {{ ip_address }} - Threat Intel{% endblock %}
 
-<body>
-    <div class="container">
-        <header>
-            <h1>⚡ THREAT INTEL RESULTS ⚡</h1>
-            <p>Analysis for: <strong style="color: var(--accent-cyan);">{{ ip_address }}</strong></p>
-        </header>
+{% block content %}
+<div class="ui container" style="margin-top: 40px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: var(--accent-cyan); font-size: 2em;">THREAT INTEL RESULTS</h1>
+        <p style="color: var(--text-secondary);">Analysis for: <strong style="color: var(--accent-cyan);">{{ ip_address }}</strong></p>
+    </div>
 
-        <main>
-            {% if from_cache %}
-            <div class="alert alert-info">
-                ℹ️ Results loaded from cache | Expires in: {{ cache_expires }}
-            </div>
-            {% endif %}
+    {% if from_cache %}
+    <div class="ui info message">
+        <i class="info circle icon"></i>
+        Results loaded from cache | Expires in: {{ cache_expires }}
+    </div>
+    {% endif %}
 
-            <!-- Risk Score Card with Visual Gauge -->
-            <div class="card" style="text-align: center;">
+    <!-- Risk Score Card with Visual Gauge -->
+    <div class="ui segment threat-card" style="text-align: center;">
                 <h2>Overall Risk Assessment</h2>
                 {% set risk_score = threat_data.risk_score | default(0) %}
                 {% set confidence_score = threat_data.confidence_score | default(0) %}
@@ -107,7 +101,7 @@
 
     <!-- Recommendation Card -->
     {% if threat_data.recommendation %}
-    <div class="card">
+    <div class="ui segment threat-card">
         <h2>🛡️ Security Recommendation</h2>
         {% set rec = threat_data.recommendation %}
         {% set action = rec.action | default('INVESTIGATE') %}
@@ -204,16 +198,16 @@
             <h3>🔍 Data Sources</h3>
             <p>Sources Used:</p>
             <p class="value">{{ threat_data.sources | length }}</p>
-            <div class="tags">
+            <div class="ui labels">
                 {% for source in threat_data.sources %}
-                <span class="tag">{{ source }}</span>
+                <span class="ui label threat-tag">{{ source }}</span>
                 {% endfor %}
             </div>
         </div>
     </div>
 
     <!-- Source Health Dashboard -->
-    <div class="card">
+    <div class="ui segment threat-card">
         <h2>📡 API Source Health</h2>
         <p style="color: var(--text-secondary); margin-bottom: 20px;">Status of threat intelligence data providers</p>
 
@@ -256,7 +250,7 @@
 
     <!-- Network Profile Card -->
     {% if threat_data.usage_type or threat_data.asn or threat_data.asn_name %}
-    <div class="card">
+    <div class="ui segment threat-card">
         <h2>🌐 Network Profile</h2>
         <p style="color: var(--text-secondary); margin-bottom: 20px;">Infrastructure classification and ownership details</p>
 
@@ -318,7 +312,7 @@
 
     <!-- Temporal Analysis Card -->
     {% if threat_data.first_seen or threat_data.last_seen %}
-    <div class="card">
+    <div class="ui segment threat-card">
         <h2>⏰ Temporal Intelligence</h2>
         <p style="color: var(--text-secondary); margin-bottom: 20px;">Activity timeline and threat evolution</p>
 
@@ -350,7 +344,7 @@
 
     <!-- Malware & Attribution Card -->
     {% if threat_data.malware_families or threat_data.threat_actor %}
-    <div class="card">
+    <div class="ui segment threat-card">
         <h2>🦠 Malware & Attribution</h2>
         <p style="color: var(--text-secondary); margin-bottom: 20px;">Associated malware families and threat actors</p>
 
@@ -360,7 +354,7 @@
                 <p style="color: var(--danger-red); font-weight: bold; margin-bottom: 10px;">
                     ⚠️ {{ threat_data.malware_families | length }} Malware Famil{{ 'y' if threat_data.malware_families | length == 1 else 'ies' }} Detected
                 </p>
-                <div class="tags">
+                <div class="ui labels">
                     {% for malware in threat_data.malware_families %}
                     <span class="tag" style="background: rgba(255, 0, 0, 0.2); border-color: var(--danger-red);">🦠 {{ malware }}</span>
                     {% endfor %}
@@ -386,7 +380,7 @@
 
     <!-- Privacy Services Detection Card -->
     {% if threat_data.is_vpn or threat_data.is_tor or threat_data.is_proxy or threat_data.is_bot %}
-    <div class="card">
+    <div class="ui segment threat-card">
         <h2>🔒 Privacy & Anonymization Services</h2>
         <p style="color: var(--text-secondary); margin-bottom: 20px;">Detection of privacy tools and proxy services</p>
 
@@ -434,7 +428,7 @@
 
     <!-- Community Intelligence Card -->
     {% if (threat_data.community_votes and (threat_data.community_votes.harmless > 0 or threat_data.community_votes.malicious > 0)) or (threat_data.tags and threat_data.tags | length > 0) %}
-    <div class="card">
+    <div class="ui segment threat-card">
         <h2>👥 Community Intelligence</h2>
         <p style="color: var(--text-secondary); margin-bottom: 20px;">Validation and insights from security community</p>
 
@@ -472,7 +466,7 @@
         {% if threat_data.tags and threat_data.tags | length > 0 %}
         <div>
             <p style="color: var(--text-secondary); margin-bottom: 10px;">Community Tags</p>
-            <div class="tags">
+            <div class="ui labels">
                 {% for tag in threat_data.tags %}
                 <span class="tag" style="background: rgba(0, 255, 255, 0.2); border-color: var(--accent-cyan);">🏷️ {{ tag }}</span>
                 {% endfor %}
@@ -487,15 +481,15 @@
 
     <!-- Threat Categories -->
     {% if threat_data.categories or threat_data.threat_types %}
-    <div class="card">
+    <div class="ui segment threat-card">
         <h2>🎯 Threat Categories</h2>
 
         {% if threat_data.categories %}
         <div style="margin-bottom: 20px;">
             <p style="color: var(--text-secondary); margin-bottom: 10px;">Abuse Categories:</p>
-            <div class="tags">
+            <div class="ui labels">
                 {% for category in threat_data.categories %}
-                <span class="tag">{{ category }}</span>
+                <span class="ui label threat-tag">{{ category }}</span>
                 {% endfor %}
             </div>
         </div>
@@ -504,9 +498,9 @@
         {% if threat_data.threat_types %}
         <div>
             <p style="color: var(--text-secondary); margin-bottom: 10px;">Threat Types:</p>
-            <div class="tags">
+            <div class="ui labels">
                 {% for threat_type in threat_data.threat_types %}
-                <span class="tag">{{ threat_type }}</span>
+                <span class="ui label threat-tag">{{ threat_type }}</span>
                 {% endfor %}
             </div>
         </div>
@@ -515,7 +509,7 @@
     {% endif %}
 
     <!-- CTIA Framework Section -->
-    <div class="card">
+    <div class="ui segment threat-card">
         <h2>🔬 Cyber Threat Intelligence Analysis (CTIA)</h2>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
@@ -610,33 +604,27 @@
     </div>
 
     <!-- Export Actions -->
-    <div class="card" style="text-align: center; margin-top: 30px;">
-        <h2>📥 Export Results</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 20px;">Download threat intelligence data in multiple
-            formats</p>
-        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-            <a href="{{ url_for('threat_intel.export_json', ip=ip_address) }}" class="btn" style="min-width: 120px;">
-                📄 JSON
+    <div class="ui segment threat-card" style="text-align: center; margin-top: 30px;">
+        <h2>Export Results</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Download threat intelligence data in multiple formats</p>
+        <div class="ui buttons large" style="flex-wrap: wrap; justify-content: center;">
+            <a href="{{ url_for('threat_intel.export_json', ip=ip_address) }}" class="ui button cyber-btn">
+                <i class="file alternate icon"></i> JSON
             </a>
-            <a href="{{ url_for('threat_intel.export_csv', ip=ip_address) }}" class="btn" style="min-width: 120px;">
-                📊 CSV
+            <a href="{{ url_for('threat_intel.export_csv', ip=ip_address) }}" class="ui button cyber-btn">
+                <i class="table icon"></i> CSV
             </a>
-            <a href="{{ url_for('threat_intel.export_pdf', ip=ip_address) }}" class="btn" style="min-width: 120px;">
-                📑 PDF Report
+            <a href="{{ url_for('threat_intel.export_pdf', ip=ip_address) }}" class="ui button cyber-btn">
+                <i class="file pdf icon"></i> PDF Report
             </a>
         </div>
     </div>
 
     <!-- Actions -->
     <div style="text-align: center; margin-top: 40px;">
-        <a href="{{ url_for('threat_intel.index') }}" class="btn">🔍 Analyze Another IP</a>
+        <a href="{{ url_for('threat_intel.index') }}" class="ui button cyber-btn large">
+            <i class="search icon"></i> Analyze Another IP
+        </a>
     </div>
-    </main>
-
-    <footer>
-        <p>&copy; 2024 Threat Intel Lookup | Built with Python & Flask</p>
-    </footer>
-    </div>
-</body>
-
-</html>
+</div>
+{% endblock %}

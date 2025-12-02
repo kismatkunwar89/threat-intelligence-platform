@@ -1,0 +1,185 @@
+/*
+ * Semantic UI Theme Overrides for Threat Intel Application
+ * Applies dark cybersecurity theme to Semantic UI components
+ */
+
+/* Body & Layout */
+body {
+    background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1f3a 100%) !important;
+    font-family: 'Courier New', 'Monaco', monospace !important;
+    color: var(--text-primary) !important;
+}
+
+.threat-intel-main {
+    padding-top: 70px;
+    min-height: calc(100vh - 150px);
+}
+
+/* Navigation */
+#threat-nav.ui.inverted.menu {
+    background: var(--bg-card) !important;
+    border-bottom: 2px solid var(--accent-cyan);
+    box-shadow: 0 2px 10px rgba(0, 217, 255, 0.3);
+}
+
+#threat-nav .item {
+    color: var(--text-secondary) !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+#threat-nav .item:hover {
+    background: rgba(0, 217, 255, 0.1) !important;
+    color: var(--accent-cyan) !important;
+}
+
+#threat-nav .header.item .cyber-logo {
+    color: var(--accent-cyan);
+    text-shadow: 0 0 10px var(--accent-cyan);
+    font-weight: bold;
+}
+
+/* Segments (Cards) */
+.ui.segment.threat-card {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+    color: var(--text-primary) !important;
+}
+
+.ui.segment.threat-card h2 {
+    color: var(--accent-green);
+    font-family: 'Courier New', monospace;
+}
+
+/* Buttons */
+.ui.button.cyber-btn {
+    background: linear-gradient(135deg, var(--accent-cyan), #0099cc) !important;
+    color: #fff !important;
+    font-family: 'Courier New', monospace !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none !important;
+}
+
+.ui.button.cyber-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.5) !important;
+}
+
+/* Forms */
+.ui.form input[type="text"] {
+    background: var(--bg-input) !important;
+    border: 2px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+.ui.form input[type="text"]:focus {
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3) !important;
+}
+
+.ui.form label {
+    color: var(--text-secondary) !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+/* Messages (Flash alerts) */
+.ui.message {
+    font-family: 'Courier New', monospace !important;
+}
+
+.ui.message.error {
+    background: rgba(255, 51, 102, 0.1) !important;
+    border-left: 4px solid var(--danger-red) !important;
+    color: var(--danger-red) !important;
+}
+
+.ui.message.info {
+    background: rgba(0, 217, 255, 0.1) !important;
+    border-left: 4px solid var(--accent-cyan) !important;
+    color: var(--accent-cyan) !important;
+}
+
+.ui.message.success {
+    background: rgba(0, 255, 136, 0.1) !important;
+    border-left: 4px solid var(--accent-green) !important;
+    color: var(--accent-green) !important;
+}
+
+/* Labels (Tags) */
+.ui.label.threat-tag {
+    background: rgba(0, 217, 255, 0.1) !important;
+    color: var(--accent-cyan) !important;
+    border: 1px solid var(--accent-cyan) !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 0.9em;
+}
+
+/* Grid */
+.ui.grid {
+    font-family: 'Courier New', monospace !important;
+}
+
+/* Container */
+.ui.container {
+    font-family: 'Courier New', monospace !important;
+}
+
+/* Cards (for about page) */
+.ui.cards > .card {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.ui.cards > .card > .content > .header {
+    color: var(--accent-cyan) !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+.ui.cards > .card > .content > .description {
+    color: var(--text-secondary) !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+/* Divider */
+.ui.divider {
+    border-top: 1px solid var(--border-color) !important;
+}
+
+/* List */
+.ui.list {
+    font-family: 'Courier New', monospace !important;
+}
+
+.ui.list .item {
+    color: var(--text-secondary) !important;
+}
+
+/* Footer */
+.threat-footer {
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    padding: 30px 0;
+    margin-top: 50px;
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .threat-intel-main {
+        padding-top: 60px;
+    }
+
+    #threat-nav.ui.menu .item {
+        font-size: 0.9em;
+    }
+
+    .ui.buttons .cyber-btn {
+        width: 100%;
+        margin: 5px 0 !important;
+    }
+}

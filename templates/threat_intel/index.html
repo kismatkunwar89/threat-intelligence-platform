@@ -1,257 +1,255 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Threat Intel Lookup</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/threat_intel.css') }}">
-    <style>
-        /* Loading Progress Modal */
-        #loadingModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
+{% extends "threat_intel/base.html" %}
 
-        #loadingModal.active {
-            display: flex;
-        }
+{% block title %}Threat Intel Lookup - IP Analysis{% endblock %}
 
-        .progress-container {
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 15px;
-            border: 2px solid var(--accent-cyan);
-            min-width: 500px;
-            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.3);
-        }
+{% block extra_css %}
+<style>
+    /* Loading Progress Modal */
+    #loadingModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
 
-        .progress-container h2 {
-            color: var(--accent-cyan);
-            margin-bottom: 30px;
-            text-align: center;
-        }
+    #loadingModal.active {
+        display: flex;
+    }
 
-        .progress-step {
-            display: flex;
-            align-items: center;
-            margin: 15px 0;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            border-left: 4px solid #555;
-            transition: all 0.3s ease;
-        }
+    .progress-container {
+        background: var(--bg-card);
+        padding: 40px;
+        border-radius: 15px;
+        border: 2px solid var(--accent-cyan);
+        min-width: 500px;
+        box-shadow: 0 10px 40px rgba(0, 255, 255, 0.3);
+    }
 
-        .progress-step.active {
-            border-left-color: var(--warning-orange);
-            background: rgba(255, 165, 0, 0.1);
-        }
+    .progress-container h2 {
+        color: var(--accent-cyan);
+        margin-bottom: 30px;
+        text-align: center;
+    }
 
-        .progress-step.completed {
-            border-left-color: var(--safe-green);
-            background: rgba(0, 255, 0, 0.05);
-        }
+    .progress-step {
+        display: flex;
+        align-items: center;
+        margin: 15px 0;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        border-left: 4px solid #555;
+        transition: all 0.3s ease;
+    }
 
-        .progress-step.error {
-            border-left-color: var(--danger-red);
-            background: rgba(255, 0, 0, 0.05);
-        }
+    .progress-step.active {
+        border-left-color: var(--warning-orange);
+        background: rgba(255, 165, 0, 0.1);
+    }
 
-        .step-icon {
-            font-size: 1.5em;
-            margin-right: 15px;
-            min-width: 30px;
-        }
+    .progress-step.completed {
+        border-left-color: var(--safe-green);
+        background: rgba(0, 255, 0, 0.05);
+    }
 
-        .step-text {
-            flex: 1;
-            color: var(--text-secondary);
-        }
+    .progress-step.error {
+        border-left-color: var(--danger-red);
+        background: rgba(255, 0, 0, 0.05);
+    }
 
-        .progress-step.active .step-text {
-            color: var(--warning-orange);
-            font-weight: bold;
-        }
+    .step-icon {
+        font-size: 1.5em;
+        margin-right: 15px;
+        min-width: 30px;
+    }
 
-        .progress-step.completed .step-text {
-            color: var(--safe-green);
-        }
+    .step-text {
+        flex: 1;
+        color: var(--text-secondary);
+    }
 
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 3px solid rgba(255, 165, 0, 0.3);
-            border-top-color: var(--warning-orange);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
+    .progress-step.active .step-text {
+        color: var(--warning-orange);
+        font-weight: bold;
+    }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <!-- Loading Progress Modal -->
-    <div id="loadingModal">
-        <div class="progress-container">
-            <h2>🔍 Analyzing Threat Intelligence...</h2>
-            <div id="progressSteps">
-                <div class="progress-step" data-step="validate">
-                    <span class="step-icon">⏳</span>
-                    <span class="step-text">Validating IP address...</span>
-                </div>
-                <div class="progress-step" data-step="abuseipdb">
-                    <span class="step-icon">⏳</span>
-                    <span class="step-text">Querying AbuseIPDB...</span>
-                </div>
-                <div class="progress-step" data-step="otx">
-                    <span class="step-icon">⏳</span>
-                    <span class="step-text">Querying AlienVault OTX...</span>
-                </div>
-                <div class="progress-step" data-step="virustotal">
-                    <span class="step-icon">⏳</span>
-                    <span class="step-text">Querying VirusTotal...</span>
-                </div>
-                <div class="progress-step" data-step="greynoise">
-                    <span class="step-icon">⏳</span>
-                    <span class="step-text">Querying GreyNoise...</span>
-                </div>
-                <div class="progress-step" data-step="normalize">
-                    <span class="step-icon">⏳</span>
-                    <span class="step-text">Normalizing threat data...</span>
-                </div>
-                <div class="progress-step" data-step="mitre">
-                    <span class="step-icon">⏳</span>
-                    <span class="step-text">Mapping MITRE ATT&CK techniques...</span>
-                </div>
-                <div class="progress-step" data-step="killchain">
-                    <span class="step-icon">⏳</span>
-                    <span class="step-text">Analyzing Cyber Kill Chain...</span>
-                </div>
-                <div class="progress-step" data-step="risk">
-                    <span class="step-icon">⏳</span>
-                    <span class="step-text">Calculating risk score...</span>
-                </div>
-                <div class="progress-step" data-step="complete">
-                    <span class="step-icon">⏳</span>
-                    <span class="step-text">Generating report...</span>
-                </div>
+    .progress-step.completed .step-text {
+        color: var(--safe-green);
+    }
+
+    .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 3px solid rgba(255, 165, 0, 0.3);
+        border-top-color: var(--warning-orange);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Loading Progress Modal -->
+<div id="loadingModal">
+    <div class="progress-container">
+        <h2>Analyzing Threat Intelligence...</h2>
+        <div id="progressSteps">
+            <div class="progress-step" data-step="validate">
+                <span class="step-icon">⏳</span>
+                <span class="step-text">Validating IP address...</span>
+            </div>
+            <div class="progress-step" data-step="abuseipdb">
+                <span class="step-icon">⏳</span>
+                <span class="step-text">Querying AbuseIPDB...</span>
+            </div>
+            <div class="progress-step" data-step="otx">
+                <span class="step-icon">⏳</span>
+                <span class="step-text">Querying AlienVault OTX...</span>
+            </div>
+            <div class="progress-step" data-step="virustotal">
+                <span class="step-icon">⏳</span>
+                <span class="step-text">Querying VirusTotal...</span>
+            </div>
+            <div class="progress-step" data-step="greynoise">
+                <span class="step-icon">⏳</span>
+                <span class="step-text">Querying GreyNoise...</span>
+            </div>
+            <div class="progress-step" data-step="normalize">
+                <span class="step-icon">⏳</span>
+                <span class="step-text">Normalizing threat data...</span>
+            </div>
+            <div class="progress-step" data-step="mitre">
+                <span class="step-icon">⏳</span>
+                <span class="step-text">Mapping MITRE ATT&CK techniques...</span>
+            </div>
+            <div class="progress-step" data-step="killchain">
+                <span class="step-icon">⏳</span>
+                <span class="step-text">Analyzing Cyber Kill Chain...</span>
+            </div>
+            <div class="progress-step" data-step="risk">
+                <span class="step-icon">⏳</span>
+                <span class="step-text">Calculating risk score...</span>
+            </div>
+            <div class="progress-step" data-step="complete">
+                <span class="step-icon">⏳</span>
+                <span class="step-text">Generating report...</span>
             </div>
         </div>
     </div>
-    <div class="container">
-        <header>
-            <h1>⚡ THREAT INTEL LOOKUP ⚡</h1>
-            <p>Aggregate threat intelligence from multiple sources</p>
-        </header>
+</div>
 
-        <main>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+<div class="ui container" style="margin-top: 40px;">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="ui {{ category }} message">
+                    <i class="close icon"></i>
+                    <div class="content">{{ message }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
-            <div class="card">
-                <h2>Enter IP Address</h2>
-                <form action="{{ url_for('threat_intel.lookup') }}" method="POST">
-                    <div class="form-group">
-                        <label for="ip_address">IP Address (IPv4 or IPv6)</label>
-                        <input
-                            type="text"
-                            id="ip_address"
-                            name="ip_address"
-                            placeholder="8.8.8.8 or 2001:4860:4860::8888"
-                            required
-                            autofocus
-                        >
-                    </div>
-                    <button type="submit">🔍 ANALYZE THREAT INTELLIGENCE</button>
-                </form>
+    <!-- Lookup Form -->
+    <div class="ui segment threat-card">
+        <h2>Enter IP Address</h2>
+        <form class="ui form" action="{{ url_for('threat_intel.lookup') }}" method="POST">
+            <div class="field">
+                <label>IP Address (IPv4 or IPv6)</label>
+                <input
+                    type="text"
+                    id="ip_address"
+                    name="ip_address"
+                    placeholder="8.8.8.8 or 2001:4860:4860::8888"
+                    required
+                    autofocus
+                >
             </div>
-
-            <div class="card">
-                <h2>About This Tool</h2>
-                <p style="color: var(--text-secondary); line-height: 1.6;">
-                    This tool aggregates threat intelligence data from multiple sources including AbuseIPDB and AlienVault OTX.
-                    Enter an IP address to get comprehensive threat analysis including risk scores, abuse reports, and malicious activity indicators.
-                </p>
-                <p style="color: var(--text-secondary); margin-top: 15px;">
-                    <strong>Data Sources:</strong>
-                </p>
-                <ul style="color: var(--text-secondary); margin-left: 20px; line-height: 1.8;">
-                    <li>AbuseIPDB - IP abuse reports and reputation</li>
-                    <li>AlienVault OTX - Community-driven threat intelligence</li>
-                </ul>
-            </div>
-        </main>
-
-        <footer>
-            <p>&copy; 2024 Threat Intel Lookup | Built with Python & Flask</p>
-        </footer>
+            <button type="submit" class="ui button cyber-btn fluid large">
+                ANALYZE THREAT INTELLIGENCE
+            </button>
+        </form>
     </div>
 
-    <script>
-        // Progress simulation for threat intelligence analysis
-        const form = document.querySelector('form');
-        const loadingModal = document.getElementById('loadingModal');
+    <!-- About Section -->
+    <div class="ui segment threat-card">
+        <h2>About This Tool</h2>
+        <p style="color: var(--text-secondary); line-height: 1.6;">
+            This tool aggregates threat intelligence data from multiple sources including AbuseIPDB, AlienVault OTX, VirusTotal, and GreyNoise.
+            Enter an IP address to get comprehensive threat analysis including risk scores, abuse reports, and malicious activity indicators.
+        </p>
+        <p style="color: var(--text-secondary); margin-top: 15px;">
+            <strong>Data Sources:</strong>
+        </p>
+        <div class="ui bulleted list" style="color: var(--text-secondary);">
+            <div class="item">AbuseIPDB - IP abuse reports and reputation</div>
+            <div class="item">AlienVault OTX - Community-driven threat intelligence</div>
+            <div class="item">VirusTotal - Malware and threat analysis</div>
+            <div class="item">GreyNoise - Internet scanning intelligence</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-        const progressSteps = [
-            { step: 'validate', delay: 300, icon: '✓', text: 'IP address validated' },
-            { step: 'abuseipdb', delay: 800, icon: '✓', text: 'AbuseIPDB queried successfully' },
-            { step: 'otx', delay: 900, icon: '✓', text: 'AlienVault OTX queried successfully' },
-            { step: 'virustotal', delay: 1000, icon: '✓', text: 'VirusTotal queried successfully' },
-            { step: 'greynoise', delay: 800, icon: '✓', text: 'GreyNoise queried successfully' },
-            { step: 'normalize', delay: 400, icon: '✓', text: 'Threat data normalized' },
-            { step: 'mitre', delay: 600, icon: '✓', text: 'MITRE ATT&CK techniques mapped' },
-            { step: 'killchain', delay: 400, icon: '✓', text: 'Cyber Kill Chain analyzed' },
-            { step: 'risk', delay: 500, icon: '✓', text: 'Risk score calculated' },
-            { step: 'complete', delay: 300, icon: '✓', text: 'Report generated' }
-        ];
+{% block extra_js %}
+<script>
+    // Progress simulation for threat intelligence analysis
+    const form = document.querySelector('form');
+    const loadingModal = document.getElementById('loadingModal');
 
-        form.addEventListener('submit', function(e) {
-            // Show loading modal
-            loadingModal.classList.add('active');
+    const progressSteps = [
+        { step: 'validate', delay: 300, icon: '✓', text: 'IP address validated' },
+        { step: 'abuseipdb', delay: 800, icon: '✓', text: 'AbuseIPDB queried successfully' },
+        { step: 'otx', delay: 900, icon: '✓', text: 'AlienVault OTX queried successfully' },
+        { step: 'virustotal', delay: 1000, icon: '✓', text: 'VirusTotal queried successfully' },
+        { step: 'greynoise', delay: 800, icon: '✓', text: 'GreyNoise queried successfully' },
+        { step: 'normalize', delay: 400, icon: '✓', text: 'Threat data normalized' },
+        { step: 'mitre', delay: 600, icon: '✓', text: 'MITRE ATT&CK techniques mapped' },
+        { step: 'killchain', delay: 400, icon: '✓', text: 'Cyber Kill Chain analyzed' },
+        { step: 'risk', delay: 500, icon: '✓', text: 'Risk score calculated' },
+        { step: 'complete', delay: 300, icon: '✓', text: 'Report generated' }
+    ];
 
-            // Simulate progress steps
-            let totalDelay = 0;
-            progressSteps.forEach((stepConfig, index) => {
-                totalDelay += stepConfig.delay;
+    form.addEventListener('submit', function(e) {
+        // Show loading modal
+        loadingModal.classList.add('active');
 
+        // Simulate progress steps
+        let totalDelay = 0;
+        progressSteps.forEach((stepConfig, index) => {
+            totalDelay += stepConfig.delay;
+
+            setTimeout(() => {
+                const stepElement = document.querySelector(`[data-step="${stepConfig.step}"]`);
+
+                // Mark as active with spinner
+                stepElement.classList.add('active');
+                stepElement.querySelector('.step-icon').innerHTML = '<span class="spinner"></span>';
+
+                // Mark as completed after a brief moment
                 setTimeout(() => {
-                    const stepElement = document.querySelector(`[data-step="${stepConfig.step}"]`);
-
-                    // Mark as active with spinner
-                    stepElement.classList.add('active');
-                    stepElement.querySelector('.step-icon').innerHTML = '<span class="spinner"></span>';
-
-                    // Mark as completed after a brief moment
-                    setTimeout(() => {
-                        stepElement.classList.remove('active');
-                        stepElement.classList.add('completed');
-                        stepElement.querySelector('.step-icon').textContent = stepConfig.icon;
-                        stepElement.querySelector('.step-text').textContent = stepConfig.text;
-                    }, stepConfig.delay - 100);
-                }, totalDelay - stepConfig.delay);
-            });
-
-            // Note: Form will submit normally and Flask will handle the redirect
-            // The loading modal will disappear when the new page loads
+                    stepElement.classList.remove('active');
+                    stepElement.classList.add('completed');
+                    stepElement.querySelector('.step-icon').textContent = stepConfig.icon;
+                    stepElement.querySelector('.step-text').textContent = stepConfig.text;
+                }, stepConfig.delay - 100);
+            }, totalDelay - stepConfig.delay);
         });
-    </script>
-</body>
-</html>
+
+        // Note: Form will submit normally and Flask will handle the redirect
+        // The loading modal will disappear when the new page loads
+    });
+</script>
+{% endblock %}

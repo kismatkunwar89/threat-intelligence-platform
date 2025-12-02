@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Threat Intel Lookup{% endblock %}</title>
+
+    <!-- Semantic UI CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+
+    <!-- Custom CSS (loaded AFTER Semantic for overrides) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/threat_intel.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/semantic_overrides.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Fixed Top Navigation -->
+    {% block nav %}
+    <div class="ui inverted top fixed menu" id="threat-nav">
+        <div class="ui container">
+            <a class="header item" href="{{ url_for('threat_intel.index') }}">
+                <span class="cyber-logo">THREAT INTEL LOOKUP</span>
+            </a>
+            <a class="item" href="{{ url_for('threat_intel.index') }}">
+                <i class="search icon"></i> Lookup
+            </a>
+            <a class="item" href="{{ url_for('threat_intel.about') }}">
+                <i class="info circle icon"></i> About
+            </a>
+        </div>
+    </div>
+    {% endblock %}
+
+    <!-- Main Content -->
+    <main class="threat-intel-main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% block footer %}
+    <footer class="threat-footer">
+        <div class="ui container center aligned">
+            <p>&copy; 2024 Threat Intel Lookup | Built with Python & Flask</p>
+        </div>
+    </footer>
+    {% endblock %}
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"
+            integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+            crossorigin="anonymous"></script>
+
+    <!-- Semantic UI JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize Semantic UI components
+            $('.ui.dropdown').dropdown();
+
+            // Close messages on click
+            $('.message .close').on('click', function() {
+                $(this).closest('.message').transition('fade');
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

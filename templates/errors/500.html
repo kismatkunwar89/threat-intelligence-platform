@@ -1,21 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>500 - Server Error</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/threat_intel.css') }}">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>⚡ 500 - SERVER ERROR ⚡</h1>
-        </header>
-        <div class="card" style="text-align: center;">
-            <h2 style="color: var(--danger-red); font-size: 4em;">500</h2>
-            <p style="font-size: 1.3em; margin: 20px 0;">Internal server error</p>
-            <a href="{{ url_for('threat_intel.index') }}" class="btn">← Back to Home</a>
-        </div>
+{% extends "threat_intel/base.html" %}
+
+{% block title %}500 - Server Error{% endblock %}
+
+{% block content %}
+<div class="ui container" style="margin-top: 80px;">
+    <div class="ui segment threat-card" style="text-align: center; padding: 60px;">
+        <h1 style="color: var(--danger-red); font-size: 6em; margin: 0;">500</h1>
+        <h2 style="color: var(--text-primary); margin-top: 20px;">Internal Server Error</h2>
+        <p style="color: var(--text-secondary); font-size: 1.2em; margin: 30px 0;">
+            Our threat analysis engine encountered an error. Please try again.
+        </p>
+        <a href="{{ url_for('threat_intel.index') }}" class="ui button cyber-btn large">
+            <i class="home icon"></i> Back to Home
+        </a>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
