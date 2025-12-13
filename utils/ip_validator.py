@@ -6,11 +6,13 @@ This module demonstrates:
 - Custom exception classes
 - Type hints with Union types
 - Comprehensions for batch operations
-- Functional programming patterns
+- Functional programming patterns (map, filter, lambda)
+- Generator functions for memory-efficient processing
+- Iterator pattern for custom IP range generation
 """
 
 import ipaddress
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Iterator, Generator
 import logging
 
 logger = logging.getLogger(__name__)
@@ -285,3 +287,235 @@ def is_valid_ip(ip_string: str) -> bool:
         return True
     except IPValidationError:
         return False
+
+
+# ==============================================================================
+# Advanced Python Features: Generators, Iterators, and Functional Programming
+# ==============================================================================
+
+def validate_ip_batch_functional(ip_list: List[str]) -> Tuple[List[str], List[str]]:
+    """
+    Validate a batch of IP addresses using functional programming approach.
+
+    This demonstrates the use of filter() and lambda functions as an alternative
+    to list comprehensions. While list comprehensions are more Pythonic,
+    functional programming with filter/map can be useful for complex transformations.
+
+    Args:
+        ip_list: List of IP address strings
+
+    Returns:
+        Tuple of (valid_ips, invalid_ips)
+
+    Example:
+        >>> ips = ['192.168.1.1', 'invalid', '8.8.8.8', 'bad_ip']
+        >>> valid, invalid = validate_ip_batch_functional(ips)
+        >>> print(valid)
+        ['192.168.1.1', '8.8.8.8']
+    """
+    validator = IPValidator()
+
+    # Functional programming approach using filter() and lambda
+    # filter() returns items where lambda returns True
+    valid_ips = list(filter(lambda ip: _is_valid_ip(ip, validator), ip_list))
+    invalid_ips = list(filter(lambda ip: not _is_valid_ip(ip, validator), ip_list))
+
+    logger.info(f"Functional batch validation: {len(valid_ips)} valid, {len(invalid_ips)} invalid")
+    return valid_ips, invalid_ips
+
+
+def validate_ip_stream(ip_list: List[str]) -> Generator[str, None, None]:
+    """
+    Generator function that yields validated IPs one at a time.
+
+    Generators are memory-efficient for processing large datasets because they
+    produce values lazily (on-demand) instead of creating the entire list in memory.
+
+    This is useful when:
+    - Processing large IP lists from files
+    - Streaming validation results
+    - Reducing memory footprint
+
+    Args:
+        ip_list: List of IP address strings
+
+    Yields:
+        str: Valid IP addresses one at a time
+
+    Example:
+        >>> ips = ['192.168.1.1', 'invalid', '8.8.8.8', 'bad_ip']
+        >>> for valid_ip in validate_ip_stream(ips):
+        ...     print(f"Valid: {valid_ip}")
+        Valid: 192.168.1.1
+        Valid: 8.8.8.8
+    """
+    validator = IPValidator()
+
+    for ip in ip_list:
+        if _is_valid_ip(ip, validator):
+            logger.debug(f"Generator yielding valid IP: {ip}")
+            yield ip  # Generator yields values one at a time
+
+
+def normalize_ip_stream(ip_list: List[str]) -> Generator[str, None, None]:
+    """
+    Generator that normalizes and yields valid IPs.
+
+    Combines validation and normalization in a memory-efficient generator.
+
+    Args:
+        ip_list: List of IP address strings
+
+    Yields:
+        str: Normalized IP addresses
+
+    Example:
+        >>> ips = ['  192.168.1.1  ', '8.8.8.8', 'invalid']
+        >>> normalized = list(normalize_ip_stream(ips))
+        >>> print(normalized)
+        ['192.168.1.1', '8.8.8.8']
+    """
+    validator = IPValidator()
+
+    for ip in ip_list:
+        try:
+            normalized = validator.normalize_ip(ip)
+            logger.debug(f"Generator yielding normalized IP: {normalized}")
+            yield normalized
+        except IPValidationError:
+            # Skip invalid IPs silently
+            continue
+
+
+class IPRangeIterator:
+    """
+    Custom iterator for generating sequential IP addresses.
+
+    This demonstrates the Iterator pattern by implementing __iter__() and __next__().
+    Iterators are useful for creating custom iteration behavior over sequences.
+
+    Use case: Generate sequential IPs for testing or scanning purposes.
+
+    Example:
+        >>> ip_range = IPRangeIterator('192.168.1.1', 5)
+        >>> for ip in ip_range:
+        ...     print(ip)
+        192.168.1.1
+        192.168.1.2
+        192.168.1.3
+        192.168.1.4
+        192.168.1.5
+    """
+
+    def __init__(self, start_ip: str, count: int):
+        """
+        Initialize IP range iterator.
+
+        Args:
+            start_ip: Starting IP address
+            count: Number of IPs to generate
+
+        Raises:
+            IPValidationError: If start_ip is invalid
+        """
+        self.start = ipaddress.ip_address(start_ip)
+        self.count = count
+        self.current_index = 0
+
+    def __iter__(self) -> 'IPRangeIterator':
+        """Return the iterator object itself."""
+        return self
+
+    def __next__(self) -> str:
+        """
+        Return the next IP address in the sequence.
+
+        Raises:
+            StopIteration: When all IPs have been generated
+        """
+        if self.current_index >= self.count:
+            raise StopIteration
+
+        # Calculate current IP by adding index to start IP
+        current_ip = str(self.start + self.current_index)
+        self.current_index += 1
+
+        logger.debug(f"Iterator producing IP: {current_ip}")
+        return current_ip
+
+
+def filter_ips_by_type(ip_list: List[str], ip_type: str = 'public') -> List[str]:
+    """
+    Filter IPs using functional programming with lambda and filter.
+
+    This demonstrates functional programming by combining filter(), lambda,
+    and method references for flexible IP filtering.
+
+    Args:
+        ip_list: List of IP addresses
+        ip_type: Type to filter ('public', 'private', 'ipv4', 'ipv6')
+
+    Returns:
+        List of filtered IP addresses
+
+    Example:
+        >>> ips = ['192.168.1.1', '8.8.8.8', '10.0.0.1']
+        >>> public_ips = filter_ips_by_type(ips, 'public')
+        >>> print(public_ips)
+        ['8.8.8.8']
+    """
+    validator = IPValidator()
+
+    # Define filter functions using lambda
+    filters = {
+        'public': lambda ip: _is_valid_ip(ip, validator) and validator.is_public(ip),
+        'private': lambda ip: _is_valid_ip(ip, validator) and validator.is_private(ip),
+        'ipv4': lambda ip: _is_valid_ip(ip, validator) and validator.is_ipv4(ip),
+        'ipv6': lambda ip: _is_valid_ip(ip, validator) and validator.is_ipv6(ip),
+    }
+
+    # Apply filter using functional programming
+    filter_func = filters.get(ip_type, filters['public'])
+    filtered_ips = list(filter(filter_func, ip_list))
+
+    logger.info(f"Filtered {len(filtered_ips)} {ip_type} IPs from {len(ip_list)} total")
+    return filtered_ips
+
+
+def map_ip_to_info(ip_list: List[str]) -> List[dict]:
+    """
+    Map IP addresses to their information using functional programming.
+
+    This demonstrates the map() function for transforming data.
+    map() applies a function to every item in an iterable.
+
+    Args:
+        ip_list: List of IP address strings
+
+    Returns:
+        List of IP information dictionaries
+
+    Example:
+        >>> ips = ['8.8.8.8', '1.1.1.1']
+        >>> info_list = map_ip_to_info(ips)
+        >>> print(info_list[0]['address'])
+        8.8.8.8
+    """
+    validator = IPValidator()
+
+    # Helper function to safely get IP info
+    def safe_get_info(ip: str) -> dict:
+        try:
+            return validator.get_ip_info(ip)
+        except IPValidationError:
+            return {
+                'address': ip,
+                'error': 'Invalid IP address'
+            }
+
+    # Use map() to transform IP strings to info dictionaries
+    # map() is a functional programming approach to transformations
+    info_list = list(map(safe_get_info, ip_list))
+
+    logger.info(f"Mapped {len(info_list)} IPs to information dictionaries")
+    return info_list
