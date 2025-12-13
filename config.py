@@ -10,7 +10,7 @@ This module demonstrates:
 
 import os
 from typing import Optional
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # loadvariables
 
 
 class ConfigurationError(Exception):
@@ -32,7 +32,8 @@ class Config:
     # Flask Configuration
     FLASK_APP: str = os.getenv('FLASK_APP', 'app.py')
     FLASK_ENV: str = os.getenv('FLASK_ENV', 'development')
-    SECRET_KEY: str = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+    SECRET_KEY: str = os.getenv(
+        'SECRET_KEY', 'dev-secret-key-change-in-production')
 
     # Database Configuration
     DB_HOST: str = os.getenv('DB_HOST', 'localhost')
@@ -113,7 +114,8 @@ class Config:
         }
 
         # Use comprehension to find missing configs (Pythonic!)
-        missing_configs = [key for key, value in required_configs.items() if not value]
+        missing_configs = [key for key,
+                           value in required_configs.items() if not value]
 
         if missing_configs:
             raise ConfigurationError(
