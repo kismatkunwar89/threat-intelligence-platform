@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils.logger import setup_logging, get_logger
 from utils.ip_validator import IPValidator
@@ -26,20 +26,28 @@ setup_logging(log_level="INFO")
 logger = get_logger(__name__)
 
 
-# Known malicious IPs for testing (these are commonly reported IPs)
+# Known malicious IPs from IPsum "Wall of Shame"
+# These IPs appear across multiple public blacklists
+MALICIOUS_IPS_WALL_OF_SHAME = [
+    "93.174.95.106",
+    "80.82.77.33",
+    "80.94.93.233",
+    "101.250.60.4",
+    "193.46.255.7",
+    "3.130.96.91",
+    "80.82.77.139",
+    "80.82.77.202",
+    "89.97.218.142",
+    "91.224.92.108",
+    "92.118.39.62",
+    "119.18.55.217"
+]
+
 TEST_IPS = {
-    "malicious": [
-        "185.220.101.1",      # Known Tor exit node with abuse reports
-        "45.142.212.61",      # Reported for scanning/attacks
-        "91.219.236.218",     # Known malicious activity
-        "23.129.64.218",      # Reported for abuse
-    ],
+    "malicious": MALICIOUS_IPS_WALL_OF_SHAME,
     "clean": [
         "8.8.8.8",            # Google DNS
         "1.1.1.1",            # Cloudflare DNS
-    ],
-    "suspicious": [
-        "103.248.70.64",      # Mixed reports
     ]
 }
 

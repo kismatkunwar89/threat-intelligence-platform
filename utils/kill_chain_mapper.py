@@ -1,5 +1,5 @@
 """
-Lockheed Martin Cyber Kill Chain Mapping Utility.
+Lockheed Martin Cyber Kill Chain Mapping Utility (Data-Driven Version).
 
 This module maps threat intelligence categories and indicators to the
 Lockheed Martin Cyber Kill Chain stages, providing context about where
@@ -21,15 +21,20 @@ Kill Chain Stages:
 Reference: https://www.lockheedmartin.com/en-us/capabilities/cyber/cyber-kill-chain.html
 
 Demonstrates:
-- Dictionary-based mapping
+- File I/O (YAML configuration loading)
+- Dictionary-based mapping (externalized to config)
 - Pattern matching for threat classification
 - Ordered stage progression
 - Type hints and documentation
+- Exception handling (config loading errors)
+- MITRE ATT&CK integration (augmented mapping)
 """
 
 from typing import Dict, List, Any, Optional
 from enum import Enum
 import logging
+import os
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -55,109 +60,6 @@ class KillChainStage(Enum):
         self.description = description
 
 
-# Mapping of threat categories/indicators to Kill Chain stages
-# Format: { 'category_keyword': [KillChainStage, ...] }
-CATEGORY_TO_KILL_CHAIN = {
-    # Stage 1: Reconnaissance
-    'port scan': [KillChainStage.RECONNAISSANCE],
-    'scan': [KillChainStage.RECONNAISSANCE],
-    'scanning': [KillChainStage.RECONNAISSANCE],
-    'reconnaissance': [KillChainStage.RECONNAISSANCE],
-    'crawler': [KillChainStage.RECONNAISSANCE],
-    'scraper': [KillChainStage.RECONNAISSANCE],
-    'enumeration': [KillChainStage.RECONNAISSANCE],
-    'information gathering': [KillChainStage.RECONNAISSANCE],
-    'osint': [KillChainStage.RECONNAISSANCE],
-    'bad web bot': [KillChainStage.RECONNAISSANCE],
-
-    # Stage 2: Weaponization (typically not observed in network traffic)
-    'exploit kit': [KillChainStage.WEAPONIZATION, KillChainStage.DELIVERY],
-    'weaponization': [KillChainStage.WEAPONIZATION],
-
-    # Stage 3: Delivery
-    'phishing': [KillChainStage.DELIVERY],
-    'spear phishing': [KillChainStage.DELIVERY],
-    'spam': [KillChainStage.DELIVERY],
-    'email spam': [KillChainStage.DELIVERY],
-    'web spam': [KillChainStage.DELIVERY],
-    'malspam': [KillChainStage.DELIVERY],
-    'drive-by': [KillChainStage.DELIVERY],
-    'watering hole': [KillChainStage.DELIVERY],
-
-    # Stage 4: Exploitation
-    'exploit': [KillChainStage.EXPLOITATION],
-    'exploited host': [KillChainStage.EXPLOITATION, KillChainStage.INSTALLATION],
-    'sql injection': [KillChainStage.EXPLOITATION],
-    'web app attack': [KillChainStage.EXPLOITATION],
-    'rce': [KillChainStage.EXPLOITATION],
-    'remote code execution': [KillChainStage.EXPLOITATION],
-    'vulnerability': [KillChainStage.EXPLOITATION],
-    'cve': [KillChainStage.EXPLOITATION],
-    'zero-day': [KillChainStage.EXPLOITATION],
-    '0day': [KillChainStage.EXPLOITATION],
-
-    # Stage 5: Installation
-    'malware': [KillChainStage.INSTALLATION, KillChainStage.COMMAND_AND_CONTROL],
-    'trojan': [KillChainStage.INSTALLATION, KillChainStage.COMMAND_AND_CONTROL],
-    'backdoor': [KillChainStage.INSTALLATION],
-    'rootkit': [KillChainStage.INSTALLATION],
-    'dropper': [KillChainStage.INSTALLATION],
-    'rat': [KillChainStage.INSTALLATION, KillChainStage.COMMAND_AND_CONTROL],
-    'worm': [KillChainStage.INSTALLATION],
-    'virus': [KillChainStage.INSTALLATION],
-
-    # Stage 6: Command & Control
-    'c2': [KillChainStage.COMMAND_AND_CONTROL],
-    'c&c': [KillChainStage.COMMAND_AND_CONTROL],
-    'command and control': [KillChainStage.COMMAND_AND_CONTROL],
-    'botnet': [KillChainStage.COMMAND_AND_CONTROL],
-    'bot': [KillChainStage.COMMAND_AND_CONTROL],
-    'proxy': [KillChainStage.COMMAND_AND_CONTROL],
-    'open proxy': [KillChainStage.COMMAND_AND_CONTROL],
-    'tor': [KillChainStage.COMMAND_AND_CONTROL],
-    'vpn': [KillChainStage.COMMAND_AND_CONTROL],
-    'anonymizer': [KillChainStage.COMMAND_AND_CONTROL],
-    'beacon': [KillChainStage.COMMAND_AND_CONTROL],
-
-    # Stage 7: Actions on Objectives
-    'ransomware': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-    'cryptominer': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-    'miner': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-    'data exfiltration': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-    'exfiltration': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-    'ddos': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-    'ddos attack': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-    'dos': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-    'ping of death': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-    'fraud': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-    'fraud orders': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-
-    # Multi-stage indicators
-    'brute-force': [KillChainStage.RECONNAISSANCE, KillChainStage.EXPLOITATION],
-    'brute force': [KillChainStage.RECONNAISSANCE, KillChainStage.EXPLOITATION],
-    'ssh': [KillChainStage.RECONNAISSANCE, KillChainStage.EXPLOITATION],
-    'ftp brute-force': [KillChainStage.RECONNAISSANCE, KillChainStage.EXPLOITATION],
-    'credential': [KillChainStage.RECONNAISSANCE, KillChainStage.EXPLOITATION],
-    'password': [KillChainStage.RECONNAISSANCE, KillChainStage.EXPLOITATION],
-    'hacking': [KillChainStage.EXPLOITATION, KillChainStage.INSTALLATION],
-    'abuse': [KillChainStage.ACTIONS_ON_OBJECTIVES],
-
-    # DNS-related (can span multiple stages)
-    'dns compromise': [KillChainStage.COMMAND_AND_CONTROL],
-    'dns poisoning': [KillChainStage.DELIVERY, KillChainStage.COMMAND_AND_CONTROL],
-
-    # IoT-related
-    'iot': [KillChainStage.RECONNAISSANCE, KillChainStage.EXPLOITATION],
-    'iot targeted': [KillChainStage.EXPLOITATION],
-
-    # GreyNoise classifications
-    'malicious': [KillChainStage.RECONNAISSANCE, KillChainStage.EXPLOITATION],
-    'greynoise_malicious': [KillChainStage.RECONNAISSANCE],
-    'suspicious': [KillChainStage.RECONNAISSANCE],
-    'greynoise_suspicious': [KillChainStage.RECONNAISSANCE],
-}
-
-
 class KillChainMapper:
     """
     Maps threat intelligence data to Cyber Kill Chain stages.
@@ -165,12 +67,184 @@ class KillChainMapper:
     This class provides methods to analyze threat categories and indicators,
     returning relevant Kill Chain stages that help analysts understand where
     in the attack lifecycle the threat is operating.
+
+    The mapper loads configuration from YAML files and can augment mappings
+    using MITRE ATT&CK tactic translations.
     """
 
-    @staticmethod
-    def map_categories(categories: List[str]) -> List[KillChainStage]:
+    # Class-level cache for loaded configurations
+    _category_mapping: Optional[Dict[str, List[KillChainStage]]] = None
+    _mitre_translation: Optional[Dict[str, List[str]]] = None
+
+    @classmethod
+    def _load_category_mapping(cls) -> Dict[str, List[KillChainStage]]:
+        """
+        Load category-to-stage mapping from YAML configuration file.
+
+        Demonstrates:
+        - File I/O operations
+        - YAML parsing
+        - Exception handling
+        - Dictionary comprehension
+
+        Returns:
+            Dictionary mapping category keywords to Kill Chain stages
+        """
+        if cls._category_mapping is not None:
+            return cls._category_mapping
+
+        try:
+            # Get path to config file
+            config_path = os.path.join(
+                os.path.dirname(__file__),
+                '..',
+                'config',
+                'kill_chain_map.yaml'
+            )
+
+            # Load YAML configuration
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+
+            # Convert stage name strings to KillChainStage enums
+            mapping = {}
+            for category, stage_names in config.items():
+                if isinstance(stage_names, list):
+                    # Map stage name strings to enum instances
+                    stages = [
+                        KillChainStage[stage_name.upper()]
+                        for stage_name in stage_names
+                        if stage_name.upper() in KillChainStage.__members__
+                    ]
+                    mapping[category.lower()] = stages
+
+            cls._category_mapping = mapping
+            logger.info(f"Loaded {len(mapping)} category mappings from YAML config")
+            return mapping
+
+        except FileNotFoundError:
+            logger.error(f"Kill Chain mapping config not found at {config_path}")
+            # Return empty dict as fallback
+            cls._category_mapping = {}
+            return {}
+        except yaml.YAMLError as e:
+            logger.error(f"Failed to parse YAML config: {e}")
+            cls._category_mapping = {}
+            return {}
+        except Exception as e:
+            logger.error(f"Unexpected error loading config: {e}", exc_info=True)
+            cls._category_mapping = {}
+            return {}
+
+    @classmethod
+    def _load_mitre_translation(cls) -> Dict[str, List[str]]:
+        """
+        Load MITRE ATT&CK tactic to Kill Chain stage translation from YAML.
+
+        Demonstrates:
+        - File I/O operations
+        - YAML parsing with nested structures
+        - Exception handling
+
+        Returns:
+            Dictionary mapping MITRE tactics to Kill Chain stage names
+        """
+        if cls._mitre_translation is not None:
+            return cls._mitre_translation
+
+        try:
+            # Get path to translation file
+            config_path = os.path.join(
+                os.path.dirname(__file__),
+                '..',
+                'config',
+                'mitre_to_kill_chain.yaml'
+            )
+
+            # Load YAML configuration
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+
+            # Extract the translation mapping
+            translation = config.get('mitre_to_kill_chain', {})
+            cls._mitre_translation = translation
+            logger.info(f"Loaded MITRE-to-Kill Chain translation for {len(translation)} tactics")
+            return translation
+
+        except FileNotFoundError:
+            logger.warning(f"MITRE translation config not found at {config_path}")
+            cls._mitre_translation = {}
+            return {}
+        except Exception as e:
+            logger.error(f"Error loading MITRE translation: {e}", exc_info=True)
+            cls._mitre_translation = {}
+            return {}
+
+    @classmethod
+    def augment_with_mitre_techniques(
+        cls,
+        stages: set,
+        threat_data: Dict[str, Any]
+    ) -> None:
+        """
+        Augment Kill Chain stages using MITRE ATT&CK technique tactics.
+
+        When threat data contains MITRE ATT&CK techniques, extract their
+        tactics and translate them to Kill Chain stages for more comprehensive
+        coverage.
+
+        Demonstrates:
+        - Integration of multiple frameworks (MITRE + Kill Chain)
+        - Data transformation
+        - Set operations
+
+        Args:
+            stages: Set of KillChainStage enums to augment (modified in place)
+            threat_data: Threat intelligence dictionary potentially containing MITRE data
+        """
+        # Load translation mapping
+        translation = cls._load_mitre_translation()
+        if not translation:
+            return
+
+        # Check if threat data has MITRE techniques
+        mitre_techniques = threat_data.get('mitre_attack_techniques', [])
+        if not mitre_techniques:
+            return
+
+        # Extract tactics from techniques and translate to Kill Chain stages
+        for technique in mitre_techniques:
+            # Technique format: {'id': 'T1595', 'name': '...', 'tactic': 'Reconnaissance'}
+            if isinstance(technique, dict):
+                tactic = technique.get('tactic', '')
+            else:
+                continue
+
+            # Look up Kill Chain stages for this tactic
+            kill_chain_stages = translation.get(tactic, [])
+
+            # Convert stage names to enums and add to set
+            for stage_name in kill_chain_stages:
+                try:
+                    stage_enum = KillChainStage[stage_name.upper()]
+                    stages.add(stage_enum)
+                except KeyError:
+                    logger.debug(f"Unknown stage name from MITRE: {stage_name}")
+
+        logger.debug(f"Augmented Kill Chain with {len(mitre_techniques)} MITRE techniques")
+
+    @classmethod
+    def map_categories(cls, categories: List[str]) -> List[KillChainStage]:
         """
         Map threat categories to Cyber Kill Chain stages.
+
+        Uses externalized YAML configuration for category-to-stage mappings.
+
+        Demonstrates:
+        - Dictionary lookups
+        - Set operations (deduplication)
+        - List sorting with custom key
+        - Partial string matching
 
         Args:
             categories: List of threat category strings
@@ -182,6 +256,8 @@ class KillChainMapper:
             >>> KillChainMapper.map_categories(['port scan', 'malware'])
             [KillChainStage.RECONNAISSANCE, KillChainStage.INSTALLATION, KillChainStage.COMMAND_AND_CONTROL]
         """
+        # Load mapping from YAML
+        category_mapping = cls._load_category_mapping()
         stages = set()
 
         for category in categories:
@@ -189,11 +265,11 @@ class KillChainMapper:
             category_lower = category.lower().strip()
 
             # Direct match
-            if category_lower in CATEGORY_TO_KILL_CHAIN:
-                stages.update(CATEGORY_TO_KILL_CHAIN[category_lower])
+            if category_lower in category_mapping:
+                stages.update(category_mapping[category_lower])
             else:
                 # Partial match - check if any key is contained in category
-                for key, mapped_stages in CATEGORY_TO_KILL_CHAIN.items():
+                for key, mapped_stages in category_mapping.items():
                     if key in category_lower or category_lower in key:
                         stages.update(mapped_stages)
 
@@ -205,13 +281,19 @@ class KillChainMapper:
             f"Mapped {len(categories)} categories to {len(sorted_stages)} Kill Chain stages")
         return sorted_stages
 
-    @staticmethod
-    def map_threat_intel(threat_data: Dict[str, Any]) -> List[KillChainStage]:
+    @classmethod
+    def map_threat_intel(cls, threat_data: Dict[str, Any]) -> List[KillChainStage]:
         """
         Map complete threat intelligence data to Cyber Kill Chain stages.
 
         Analyzes categories, threat_types, and other fields to provide
-        comprehensive Kill Chain mapping.
+        comprehensive Kill Chain mapping. Can optionally augment with
+        MITRE ATT&CK technique tactics.
+
+        Demonstrates:
+        - Dictionary access with .get() for safe key retrieval
+        - List concatenation
+        - Function composition (calling other methods)
 
         Args:
             threat_data: Normalized threat intelligence dictionary or ThreatIntelResult
@@ -237,16 +319,28 @@ class KillChainMapper:
             all_indicators.append(f"greynoise_{gn_classification}")
             all_indicators.append(gn_classification)
 
-        # Map all collected indicators
-        stages = KillChainMapper.map_categories(all_indicators)
+        # Map all collected indicators using configuration
+        stages_list = cls.map_categories(all_indicators)
+        stages_set = set(stages_list)
 
-        logger.info(f"Mapped threat intel to {len(stages)} Kill Chain stages")
-        return stages
+        # Augment with MITRE ATT&CK tactics if available
+        cls.augment_with_mitre_techniques(stages_set, threat_data)
+
+        # Sort by stage order
+        stage_order = list(KillChainStage)
+        sorted_stages = sorted(stages_set, key=lambda s: stage_order.index(s))
+
+        logger.info(f"Mapped threat intel to {len(sorted_stages)} Kill Chain stages")
+        return sorted_stages
 
     @staticmethod
     def get_stage_names(stages: List[KillChainStage]) -> List[str]:
         """
         Get display names for a list of Kill Chain stages.
+
+        Demonstrates:
+        - List comprehension
+        - Accessing enum attributes
 
         Args:
             stages: List of KillChainStage enums
@@ -264,6 +358,10 @@ class KillChainMapper:
     def get_stages_with_descriptions(stages: List[KillChainStage]) -> List[Dict[str, str]]:
         """
         Get stages with their descriptions for detailed display.
+
+        Demonstrates:
+        - List comprehension with dictionaries
+        - String manipulation (split)
 
         Args:
             stages: List of KillChainStage enums
@@ -284,6 +382,11 @@ class KillChainMapper:
     def get_attack_progression_summary(stages: List[KillChainStage]) -> str:
         """
         Generate a human-readable summary of the attack progression.
+
+        Demonstrates:
+        - Conditional logic
+        - String formatting
+        - List indexing
 
         Args:
             stages: List of KillChainStage enums
@@ -316,6 +419,10 @@ class KillChainMapper:
         Useful for displaying the full Kill Chain with highlighting
         of identified stages.
 
+        Demonstrates:
+        - Iterating over enum members
+        - List comprehension
+
         Returns:
             List of all stages with name and description
         """
@@ -333,6 +440,10 @@ def map_to_kill_chain(threat_data: Dict[str, Any]) -> List[str]:
     """
     Convenience function to map threat data to Kill Chain stage names.
 
+    Demonstrates:
+    - Function composition
+    - Clean API design
+
     Args:
         threat_data: Normalized threat intelligence dictionary
 
@@ -346,6 +457,10 @@ def map_to_kill_chain(threat_data: Dict[str, Any]) -> List[str]:
 def get_kill_chain_stages(threat_data: Dict[str, Any]) -> List[Dict[str, str]]:
     """
     Convenience function to get Kill Chain stages with descriptions.
+
+    Demonstrates:
+    - Function composition
+    - Returning structured data
 
     Args:
         threat_data: Normalized threat intelligence dictionary

@@ -1,0 +1,206 @@
+# Lockheed Martin Cyber Kill Chain Mapping Configuration
+#
+# This file externalizes category-to-stage mappings, making them data-driven
+# rather than hardcoded. Analysts can update this file without touching Python code.
+#
+# Format:
+#   category_keyword:
+#     - stage_name
+#
+# Valid stage names:
+#   - RECONNAISSANCE
+#   - WEAPONIZATION
+#   - DELIVERY
+#   - EXPLOITATION
+#   - INSTALLATION
+#   - COMMAND_AND_CONTROL
+#   - ACTIONS_ON_OBJECTIVES
+
+# Stage 1: Reconnaissance - Information gathering
+port scan:
+  - RECONNAISSANCE
+scan:
+  - RECONNAISSANCE
+scanning:
+  - RECONNAISSANCE
+reconnaissance:
+  - RECONNAISSANCE
+crawler:
+  - RECONNAISSANCE
+scraper:
+  - RECONNAISSANCE
+enumeration:
+  - RECONNAISSANCE
+information gathering:
+  - RECONNAISSANCE
+osint:
+  - RECONNAISSANCE
+bad web bot:
+  - RECONNAISSANCE
+
+# Stage 2: Weaponization - Creating attack tools (rarely observed in network traffic)
+exploit kit:
+  - WEAPONIZATION
+  - DELIVERY
+weaponization:
+  - WEAPONIZATION
+
+# Stage 3: Delivery - Transmitting weapon to target
+phishing:
+  - DELIVERY
+spear phishing:
+  - DELIVERY
+spam:
+  - DELIVERY
+email spam:
+  - DELIVERY
+web spam:
+  - DELIVERY
+malspam:
+  - DELIVERY
+drive-by:
+  - DELIVERY
+watering hole:
+  - DELIVERY
+
+# Stage 4: Exploitation - Exploiting vulnerabilities
+exploit:
+  - EXPLOITATION
+exploited host:
+  - EXPLOITATION
+  - INSTALLATION
+sql injection:
+  - EXPLOITATION
+web app attack:
+  - EXPLOITATION
+rce:
+  - EXPLOITATION
+remote code execution:
+  - EXPLOITATION
+vulnerability:
+  - EXPLOITATION
+cve:
+  - EXPLOITATION
+zero-day:
+  - EXPLOITATION
+0day:
+  - EXPLOITATION
+
+# Stage 5: Installation - Installing malware
+malware:
+  - INSTALLATION
+  - COMMAND_AND_CONTROL
+trojan:
+  - INSTALLATION
+  - COMMAND_AND_CONTROL
+backdoor:
+  - INSTALLATION
+rootkit:
+  - INSTALLATION
+dropper:
+  - INSTALLATION
+rat:
+  - INSTALLATION
+  - COMMAND_AND_CONTROL
+worm:
+  - INSTALLATION
+virus:
+  - INSTALLATION
+
+# Stage 6: Command & Control - Remote control channel
+c2:
+  - COMMAND_AND_CONTROL
+c&c:
+  - COMMAND_AND_CONTROL
+command and control:
+  - COMMAND_AND_CONTROL
+botnet:
+  - COMMAND_AND_CONTROL
+bot:
+  - COMMAND_AND_CONTROL
+proxy:
+  - COMMAND_AND_CONTROL
+open proxy:
+  - COMMAND_AND_CONTROL
+tor:
+  - COMMAND_AND_CONTROL
+vpn:
+  - COMMAND_AND_CONTROL
+anonymizer:
+  - COMMAND_AND_CONTROL
+beacon:
+  - COMMAND_AND_CONTROL
+
+# Stage 7: Actions on Objectives - Achieving attack goals
+ransomware:
+  - ACTIONS_ON_OBJECTIVES
+cryptominer:
+  - ACTIONS_ON_OBJECTIVES
+miner:
+  - ACTIONS_ON_OBJECTIVES
+data exfiltration:
+  - ACTIONS_ON_OBJECTIVES
+exfiltration:
+  - ACTIONS_ON_OBJECTIVES
+ddos:
+  - ACTIONS_ON_OBJECTIVES
+ddos attack:
+  - ACTIONS_ON_OBJECTIVES
+dos:
+  - ACTIONS_ON_OBJECTIVES
+ping of death:
+  - ACTIONS_ON_OBJECTIVES
+fraud:
+  - ACTIONS_ON_OBJECTIVES
+fraud orders:
+  - ACTIONS_ON_OBJECTIVES
+
+# Multi-stage indicators
+brute-force:
+  - RECONNAISSANCE
+  - EXPLOITATION
+brute force:
+  - RECONNAISSANCE
+  - EXPLOITATION
+ssh:
+  - RECONNAISSANCE
+  - EXPLOITATION
+ftp brute-force:
+  - RECONNAISSANCE
+  - EXPLOITATION
+credential:
+  - RECONNAISSANCE
+  - EXPLOITATION
+password:
+  - RECONNAISSANCE
+  - EXPLOITATION
+hacking:
+  - EXPLOITATION
+  - INSTALLATION
+abuse:
+  - ACTIONS_ON_OBJECTIVES
+
+# DNS-related (can span multiple stages)
+dns compromise:
+  - COMMAND_AND_CONTROL
+dns poisoning:
+  - DELIVERY
+  - COMMAND_AND_CONTROL
+
+# IoT-related
+iot:
+  - RECONNAISSANCE
+  - EXPLOITATION
+iot targeted:
+  - EXPLOITATION
+
+# GreyNoise classifications
+malicious:
+  - RECONNAISSANCE
+  - EXPLOITATION
+greynoise_malicious:
+  - RECONNAISSANCE
+suspicious:
+  - RECONNAISSANCE
+greynoise_suspicious:
+  - RECONNAISSANCE

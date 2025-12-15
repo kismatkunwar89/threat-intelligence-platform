@@ -13,3 +13,13 @@ requests==2.31.0
 
 # Additional utilities
 Werkzeug==3.0.1
+
+# YAML Configuration Parsing
+PyYAML==6.0.3
+
+# MITRE ATT&CK Framework
+mitreattack-python==3.0.4
+pandas==2.1.4
+
+# PDF generation
+reportlab==4.2.5

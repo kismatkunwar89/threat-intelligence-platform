@@ -1,0 +1,74 @@
+# MITRE ATT&CK Tactic to Kill Chain Stage Translation
+#
+# This file maps MITRE ATT&CK tactics to Lockheed Martin Cyber Kill Chain stages.
+# When a technique is found via MITRE mapping, we can augment Kill Chain stages
+# automatically using this translation table.
+#
+# Reference:
+# - MITRE ATT&CK: https://attack.mitre.org/tactics/enterprise/
+# - Kill Chain: https://www.lockheedmartin.com/en-us/capabilities/cyber/cyber-kill-chain.html
+
+# MITRE Tactic -> Kill Chain Stage(s)
+mitre_to_kill_chain:
+  # Reconnaissance (TA0043) - Active scanning, gathering information
+  Reconnaissance:
+    - RECONNAISSANCE
+
+  # Resource Development (TA0042) - Establishing resources for operations
+  Resource Development:
+    - WEAPONIZATION  # Preparing infrastructure is part of weaponization
+
+  # Initial Access (TA0001) - Getting into the network
+  Initial Access:
+    - DELIVERY
+    - EXPLOITATION
+
+  # Execution (TA0002) - Running malicious code
+  Execution:
+    - EXPLOITATION
+    - INSTALLATION
+
+  # Persistence (TA0003) - Maintaining foothold
+  Persistence:
+    - INSTALLATION
+
+  # Privilege Escalation (TA0004) - Gaining higher-level permissions
+  Privilege Escalation:
+    - EXPLOITATION
+    - INSTALLATION
+
+  # Defense Evasion (TA0005) - Avoiding detection
+  Defense Evasion:
+    - INSTALLATION
+    - COMMAND_AND_CONTROL
+
+  # Credential Access (TA0006) - Stealing credentials
+  Credential Access:
+    - RECONNAISSANCE
+    - EXPLOITATION
+
+  # Discovery (TA0007) - Figuring out the environment
+  Discovery:
+    - RECONNAISSANCE
+    - EXPLOITATION
+
+  # Lateral Movement (TA0008) - Moving through the network
+  Lateral Movement:
+    - EXPLOITATION
+    - COMMAND_AND_CONTROL
+
+  # Collection (TA0009) - Gathering data of interest
+  Collection:
+    - ACTIONS_ON_OBJECTIVES
+
+  # Command and Control (TA0011) - Communicating with compromised systems
+  Command And Control:
+    - COMMAND_AND_CONTROL
+
+  # Exfiltration (TA0010) - Stealing data
+  Exfiltration:
+    - ACTIONS_ON_OBJECTIVES
+
+  # Impact (TA0040) - Disruption, destruction, or manipulation
+  Impact:
+    - ACTIONS_ON_OBJECTIVES
