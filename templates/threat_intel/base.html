@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,8 +13,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/threat_intel.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/semantic_overrides.css') }}">
 
-    {% block extra_css %}{% endblock %}
+    {% block extra_css %}{% endblock %} \\lets add extra css if needed for child
 </head>
+
 <body>
     <!-- Fixed Top Navigation -->
     {% block nav %}
@@ -41,26 +43,24 @@
     {% block footer %}
     <footer class="threat-footer">
         <div class="ui container center aligned">
-            <p>&copy; 2024 Threat Intel Lookup | Built with Python & Flask</p>
+            <p>&copy; 2025 Threat Intel Lookup | Built with Python & Flask</p>
         </div>
     </footer>
     {% endblock %}
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"
-            integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
-            crossorigin="anonymous"></script>
-
+        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <!-- Semantic UI JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Initialize Semantic UI components
             $('.ui.dropdown').dropdown();
 
             // Close messages on click
-            $('.message .close').on('click', function() {
+            $('.message .close').on('click', function () {
                 $(this).closest('.message').transition('fade');
             });
         });
@@ -68,4 +68,5 @@
 
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
