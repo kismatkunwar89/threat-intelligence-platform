@@ -103,7 +103,6 @@ threat-intelligence-platform/
 │   ├── mitre_mapper.py        # MITRE ATT&CK mapping
 │   ├── kill_chain_mapper.py   # Cyber Kill Chain analysis
 │   ├── recommendation_engine.py # Risk-based recommendations
-│   ├── pdf_generator.py       # PDF export with ReportLab
 │   └── logger.py              # Logging configuration
 │
 ├── templates/
