@@ -50,7 +50,7 @@ This application provides security analysts with unified threat intelligence by 
 
 ### Results - Risk Assessment & Recommendations
 ![Results Part 1](screenshots/results1.png)
-*Circular risk gauge (97/100), confidence scoring, and color-coded security recommendations (BLOCK/MONITOR/INVESTIGATE)*
+*Circular risk gauge showing threat level, confidence scoring, and color-coded security recommendations (BLOCK/MONITOR/INVESTIGATE)*
 
 ### Results - Network Profile & Intelligence
 ![Results Part 2](screenshots/results2.png)
@@ -72,7 +72,7 @@ This application provides security analysts with unified threat intelligence by 
 ![About](screenshots/about.png)
 *Project overview, data sources, and multi-API threat intelligence aggregation explanation*
 
-> **Sample Files:** See [`samples/`](samples/) directory for example JSON, CSV, and PDF exports using real threat data (IP: 93.174.95.106, Risk: 97/100)
+> **Sample Files:** See [`samples/`](samples/) directory for example JSON, CSV, and PDF exports using real threat data (IP: 93.174.95.106, Risk: 62/100, Confidence: 83%)
 
 ## Technology Stack
 
