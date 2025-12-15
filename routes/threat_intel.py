@@ -39,6 +39,7 @@ from utils.mitre_mapper import map_to_mitre_attack
 from utils.kill_chain_mapper import map_to_kill_chain
 from config import Config
 
+
 # Create blueprint
 threat_intel_bp = Blueprint(
     'threat_intel',
@@ -266,16 +267,15 @@ def export_json(ip: str):
         validator = IPValidator()
         normalized_ip = validator.normalize_ip(ip)
 
-        # Get from cache or fetch fresh
+        # Get from cache - REQUIRE cached data (don't fetch fresh)
         cached = CacheManager.get_cache(normalized_ip)
-        if cached and not cached.is_expired:
-            logger.info(f"Using cached data for JSON export: {normalized_ip}")
-            data = cached.threat_data
-        else:
-            logger.info(
-                f"Fetching fresh data for JSON export: {normalized_ip}")
-            data = _fetch_threat_intel(normalized_ip)
-            CacheManager.set_cache(normalized_ip, data)
+        if not cached or cached.is_expired:
+            logger.warning(f"No cached data for JSON export: {normalized_ip}")
+            flash("Please lookup the IP address first before exporting.", "warning")
+            return redirect(url_for('threat_intel.index'))
+        
+        logger.info(f"Using cached data for JSON export: {normalized_ip}")
+        data = cached.threat_data
 
         # Convert to dict if dataclass
         if hasattr(data, 'to_dict'):
@@ -322,15 +322,15 @@ def export_csv(ip: str):
         validator = IPValidator()
         normalized_ip = validator.normalize_ip(ip)
 
-        # Get from cache or fetch fresh
+        # Get from cache - REQUIRE cached data (don't fetch fresh)
         cached = CacheManager.get_cache(normalized_ip)
-        if cached and not cached.is_expired:
-            logger.info(f"Using cached data for CSV export: {normalized_ip}")
-            data = cached.threat_data
-        else:
-            logger.info(f"Fetching fresh data for CSV export: {normalized_ip}")
-            data = _fetch_threat_intel(normalized_ip)
-            CacheManager.set_cache(normalized_ip, data)
+        if not cached or cached.is_expired:
+            logger.warning(f"No cached data for CSV export: {normalized_ip}")
+            flash("Please lookup the IP address first before exporting.", "warning")
+            return redirect(url_for('threat_intel.index'))
+        
+        logger.info(f"Using cached data for CSV export: {normalized_ip}")
+        data = cached.threat_data
 
         # Convert to dict if dataclass
         if hasattr(data, 'to_dict'):
@@ -401,15 +401,15 @@ def export_pdf(ip: str):
         validator = IPValidator()
         normalized_ip = validator.normalize_ip(ip)
 
-        # Get from cache or fetch fresh
+        # Get from cache - REQUIRE cached data (don't fetch fresh)
         cached = CacheManager.get_cache(normalized_ip)
-        if cached and not cached.is_expired:
-            logger.info(f"Using cached data for PDF export: {normalized_ip}")
-            data = cached.threat_data
-        else:
-            logger.info(f"Fetching fresh data for PDF export: {normalized_ip}")
-            data = _fetch_threat_intel(normalized_ip)
-            CacheManager.set_cache(normalized_ip, data)
+        if not cached or cached.is_expired:
+            logger.warning(f"No cached data for PDF export: {normalized_ip}")
+            flash("Please lookup the IP address first before exporting.", "warning")
+            return redirect(url_for('threat_intel.index'))
+        
+        logger.info(f"Using cached data for PDF export: {normalized_ip}")
+        data = cached.threat_data
 
         # Convert to dict if dataclass
         if hasattr(data, 'to_dict'):
