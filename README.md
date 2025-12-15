@@ -38,6 +38,42 @@ This application provides security analysts with unified threat intelligence by 
 - **Real-Time Progress**: 10-step loading modal with status updates
 - **Responsive Design**: Mobile and desktop compatible
 
+## Screenshots
+
+### Homepage - IP Search Interface
+![Homepage](screenshots/homepage.png)
+*Clean, dark-themed cybersecurity interface with IP address validation and real-time search*
+
+### Real-Time Analysis Progress
+![Progress Bar](screenshots/progressbar.png)
+*10-step loading modal showing API queries, data normalization, and framework mapping in real-time*
+
+### Results - Risk Assessment & Recommendations
+![Results Part 1](screenshots/results1.png)
+*Circular risk gauge (97/100), confidence scoring, and color-coded security recommendations (BLOCK/MONITOR/INVESTIGATE)*
+
+### Results - Network Profile & Intelligence
+![Results Part 2](screenshots/results2.png)
+*API source health monitoring, network profiling (ASN, ISP, usage type), and temporal analysis*
+
+### Results - Threat Categories & Privacy Detection
+![Results Part 3](screenshots/results3.png)
+*Malware attribution, community intelligence from VirusTotal, and privacy service detection (VPN/Tor/Proxy)*
+
+### Results - MITRE ATT&CK Framework
+![Results Part 4](screenshots/results4.png)
+*Automated technique identification with tactic classification and direct links to MITRE ATT&CK knowledge base*
+
+### Results - Cyber Kill Chain Analysis
+![Results Part 5](screenshots/results5.png)
+*7-stage attack progression visualization showing 6/7 detected stages (Weaponization rarely observable in network traffic)*
+
+### About Section
+![About](screenshots/about.png)
+*Project overview, data sources, and multi-API threat intelligence aggregation explanation*
+
+> **Sample Files:** See [`samples/`](samples/) directory for example JSON, CSV, and PDF exports using real threat data (IP: 93.174.95.106, Risk: 97/100)
+
 ## Technology Stack
 
 **Backend:**
