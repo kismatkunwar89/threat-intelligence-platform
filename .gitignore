@@ -33,3 +33,8 @@ logs/
 .DS_Store
 Thumbs.db
 *:Zone.Identifier
+
+# Project-specific
+prompt/
+agentic-corrective/
+.ipynb_checkpoints/
