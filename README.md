@@ -14,7 +14,7 @@ This application provides security analysts with unified threat intelligence by 
 
 ### Core Functionality
 - **Multi-Source Intelligence Aggregation**: Combines data from AbuseIPDB, AlienVault OTX, VirusTotal, and GreyNoise
-- **IPv4/IPv6 Support**: Comprehensive validation for all IP address formats
+- **IPv4/IPv6 Support**: Comprehensive validation for all IP address formats (primarily tested with IPv4)
 - **Smart Caching**: MySQL-based caching with 24-hour TTL (40-60% cache hit rate)
 - **Risk Scoring**: Weighted risk calculation (0-100 scale) across multiple sources
 - **MITRE ATT&CK Mapping**: Automatic tactic and technique identification
